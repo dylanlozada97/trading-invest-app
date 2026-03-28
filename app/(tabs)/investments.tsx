@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScreenContainer } from '@/components/screen-container';
 import { InvestmentCard } from '@/components/investment-card';
+import { InvestmentProgress } from '@/components/investment-progress';
 import { useInvestment } from '@/lib/investment-context';
 
 type FilterType = 'all' | 'active' | 'completed';

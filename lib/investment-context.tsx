@@ -12,6 +12,13 @@ const STORAGE_KEYS = {
 const INITIAL_BALANCE = 0;
 const INVESTMENT_GAIN_PERCENTAGE = 0.60; // 60% gain
 const INVESTMENT_DURATION_DAYS = 15;
+const REFERRAL_COMMISSION_RATES = {
+  bronze: 0.10,    // 10%
+  silver: 0.15,    // 15%
+  gold: 0.20,      // 20%
+  platinum: 0.25,  // 25%
+  diamond: 0.30,   // 30%
+};
 
 export function InvestmentProvider({ children }: { children: React.ReactNode }) {
   const [balance, setBalance] = useState(INITIAL_BALANCE);

@@ -142,3 +142,26 @@
 - [ ] Agregar animaciones sutiles
 - [ ] Optimizar tipografía y espaciado
 
+
+
+## Fase 20: Comisiones Automáticas
+- [x] Calcular comisión cuando referido invierte
+- [x] Agregar comisión al saldo del referidor automáticamente
+- [x] Actualizar nivel del referidor si alcanza más referidos
+- [x] Mostrar comisiones en tiempo real en perfil
+- [x] Registrar historial de comisiones ganadas
+
+## Fase 21: Gráfico de Crecimiento Diario
+- [x] Crear componente de gráfico de progreso
+- [x] Calcular ganancia proporcional por día
+- [x] Mostrar porcentaje de progreso (0-60%)
+- [x] Actualizar gráfico en tiempo real
+- [x] Agregar animaciones al gráfico
+
+## Fase 22: Diseño Mejorado con Temática China
+- [x] Cambiar colores primarios a rojo/oro
+- [x] Actualizar gradientes con temática china
+- [x] Agregar iconografía asiática
+- [x] Mejorar tipografía y espaciado
+- [x] Agregar animaciones sutiles
+
