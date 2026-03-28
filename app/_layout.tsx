@@ -10,6 +10,7 @@ import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { InvestmentProvider } from "@/lib/investment-context";
 import { RechargeProvider } from "@/lib/recharge-context";
+import { ReferralProvider } from "@/lib/referral-context";
 import {
   SafeAreaFrameContext,
   SafeAreaInsetsContext,
@@ -84,8 +85,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <InvestmentProvider>
         <RechargeProvider>
-          <trpc.Provider client={trpcClient} queryClient={queryClient}>
-            <QueryClientProvider client={queryClient}>
+          <ReferralProvider>
+            <trpc.Provider client={trpcClient} queryClient={queryClient}>
+              <QueryClientProvider client={queryClient}>
               {/* Default to hiding native headers so raw route segments don't appear (e.g. "(tabs)", "products/[id]"). */}
               {/* If a screen needs the native header, explicitly enable it and set a human title via Stack.Screen options. */}
               {/* in order for ios apps tab switching to work properly, use presentation: "fullScreenModal" for login page, whenever you decide to use presentation: "modal*/}
@@ -96,6 +98,7 @@ export default function RootLayout() {
               <StatusBar style="auto" />
             </QueryClientProvider>
           </trpc.Provider>
+          </ReferralProvider>
         </RechargeProvider>
       </InvestmentProvider>
     </GestureHandlerRootView>

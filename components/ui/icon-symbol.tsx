@@ -21,6 +21,7 @@ const MAPPING = {
   "chart.line.uptrend.xyaxis": "trending-up",
   "person.fill": "person",
   "plus.circle.fill": "add-circle",
+  "person.2.fill": "group",
 } as IconMapping;
 
 /**

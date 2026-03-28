@@ -81,3 +81,26 @@
 - [x] Guardar historial de recargas
 - [x] Notificar cuando recarga sea aprobada
 
+
+## Fase 12: Panel de Administración
+- [ ] Crear pantalla de admin para verificar recargas
+- [ ] Mostrar lista de recargas pendientes con fotos
+- [ ] Implementar botones de aprobar/rechazar
+- [ ] Agregar historial de recargas procesadas
+- [ ] Proteger acceso con contraseña/código
+
+## Fase 13: Cambiar Saldo Inicial a 0
+- [x] Modificar saldo inicial de $10,000 a $0
+- [x] Actualizar mensaje en pantalla inicial
+- [x] Validar que solo se puede invertir después de recargar
+
+## Fase 14: Sistema de Referidos y Niveles
+- [x] Crear tipos para referidos y niveles
+- [x] Implementar contexto de referidos
+- [x] Crear pantalla de referidos con código único
+- [x] Mostrar árbol de referidos
+- [x] Implementar sistema de niveles (Nivel 1, 2, 3, etc)
+- [x] Calcular comisiones por nivel (ej: Nivel 1: 10%, Nivel 2: 5%, Nivel 3: 2%)
+- [x] Mostrar ganancias por referidos
+- [x] Agregar tab de referidos en navegación
+

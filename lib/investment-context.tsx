@@ -9,7 +9,7 @@ const STORAGE_KEYS = {
   INVESTMENTS: 'investments_list',
 };
 
-const INITIAL_BALANCE = 10000;
+const INITIAL_BALANCE = 0;
 const INVESTMENT_GAIN_PERCENTAGE = 0.60; // 60% gain
 const INVESTMENT_DURATION_DAYS = 15;
 

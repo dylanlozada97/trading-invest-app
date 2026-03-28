@@ -56,6 +56,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="plus.circle.fill" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="referrals"
+        options={{
+          title: "Referidos",
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.2.fill" color={color} />,
+        }}
+      />
     </Tabs>
   );
 }
