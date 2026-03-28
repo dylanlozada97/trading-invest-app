@@ -63,16 +63,27 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* Botón Invertir */}
-          <Pressable
-            onPress={handleInvestPress}
-            style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
-            className="bg-white rounded-xl py-3 active:scale-95"
-          >
-            <Text className="text-center font-semibold text-primary text-base">
-              Invertir Ahora
-            </Text>
-          </Pressable>
+          {/* Botones de acción */}
+          <View className="flex-row gap-3">
+            <Pressable
+              onPress={handleInvestPress}
+              style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+              className="flex-1 bg-white rounded-xl py-3 active:scale-95"
+            >
+              <Text className="text-center font-semibold text-primary text-base">
+                Invertir
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/(tabs)/recharge')}
+              style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+              className="flex-1 bg-white/20 border border-white rounded-xl py-3 active:scale-95"
+            >
+              <Text className="text-center font-semibold text-white text-base">
+                Recargar
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* Contenido principal */}

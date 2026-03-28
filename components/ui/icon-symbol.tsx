@@ -20,6 +20,7 @@ const MAPPING = {
   "chevron.right": "chevron-right",
   "chart.line.uptrend.xyaxis": "trending-up",
   "person.fill": "person",
+  "plus.circle.fill": "add-circle",
 } as IconMapping;
 
 /**

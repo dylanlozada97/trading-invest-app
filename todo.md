@@ -68,3 +68,16 @@
 - [ ] Documentación de uso
 - [ ] Entregar al usuario
 
+
+## Fase 11: Recarga por Consignación Bancaria
+- [x] Crear pantalla de recarga (Recharge)
+- [x] Mostrar datos bancarios de la cuenta receptora
+- [x] Implementar captura de foto de consignación
+- [x] Validar y guardar foto
+- [x] Crear formulario con monto y referencia
+- [x] Mostrar estado de recarga (Pendiente, Aprobada, Rechazada)
+- [x] Agregar tab de recarga en navegación
+- [x] Integrar recarga con contexto de inversiones
+- [x] Guardar historial de recargas
+- [x] Notificar cuando recarga sea aprobada
+

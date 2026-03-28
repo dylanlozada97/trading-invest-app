@@ -119,6 +119,15 @@ export default function ProfileScreen() {
 
           {/* Botones de acción */}
           <Pressable
+            onPress={() => router.push('/(tabs)/recharge')}
+            className="bg-success rounded-xl py-3 mb-3"
+          >
+            <Text className="text-center text-white font-semibold">
+              + Recargar Saldo
+            </Text>
+          </Pressable>
+
+          <Pressable
             onPress={() => router.push('/(tabs)')}
             className="bg-primary rounded-xl py-3 mb-3"
           >
