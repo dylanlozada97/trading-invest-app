@@ -60,8 +60,8 @@ export default function InvestScreen() {
           >
             <Text className="text-white text-base">← Atrás</Text>
           </Pressable>
-          <Text className="text-3xl font-bold text-white mb-2">Crear Inversión</Text>
-          <Text className="text-white/80">Obtén 60% de ganancias en 15 días</Text>
+          <Text className="text-3xl font-bold text-white mb-2">Invertir en China</Text>
+          <Text className="text-white/80">Obtén 60% de ganancias en 15 días con productos de China</Text>
         </View>
 
         {/* Contenido */}

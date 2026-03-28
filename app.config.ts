@@ -25,11 +25,10 @@ const bundleId =
 // e.g., "space.manus.my.app.t20240115103045" -> "manus20240115103045"
 const timestamp = bundleId.split(".").pop()?.replace(/^t/, "") ?? "";
 const schemeFromBundleId = `manus${timestamp}`;
-
 const env = {
   // App branding - update these values directly (do not use env vars)
-  appName: "Trading Invest",
-  appSlug: "trading-invest-app",
+  appName: "Inversiones China",
+  appSlug: "{{project_name}}",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
   logoUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310519663459187834/PTyWxGGRGRsKiYyzvuRuFr/icon-F6ueUGpRBwXXzm2q8Xi9aT.png",

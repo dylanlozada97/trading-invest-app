@@ -137,7 +137,7 @@ export default function HomeScreen() {
                 Sin inversiones
               </Text>
               <Text className="text-sm text-muted text-center mb-6">
-                Comienza a invertir y obtén ganancias del 60% en 15 días
+                Comienza a invertir en productos de China y obtén ganancias del 60% en 15 días
               </Text>
               <Pressable
                 onPress={handleInvestPress}
