@@ -23,6 +23,7 @@ import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 
 import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
+import { useRouter } from "expo-router";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -32,11 +33,21 @@ export const unstable_settings = {
 };
 
 function RootLayoutContent() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
   const initialInsets = initialWindowMetrics?.insets ?? DEFAULT_WEB_INSETS;
   const initialFrame = initialWindowMetrics?.frame ?? DEFAULT_WEB_FRAME;
 
   const [insets, setInsets] = useState<EdgeInsets>(initialInsets);
   const [frame, setFrame] = useState<Rect>(initialFrame);
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        router.replace('/welcome');
+      }
+    }
+  }, [isAuthenticated, isLoading]);
 
   // Initialize Manus runtime for cookie injection from parent container
   useEffect(() => {
@@ -95,6 +106,7 @@ function RootLayoutContent() {
               {/* If a screen needs the native header, explicitly enable it and set a human title via Stack.Screen options. */}
               {/* in order for ios apps tab switching to work properly, use presentation: "fullScreenModal" for login page, whenever you decide to use presentation: "modal*/}
               <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="welcome" />
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="oauth/callback" />
               </Stack>
