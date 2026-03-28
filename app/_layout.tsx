@@ -11,6 +11,8 @@ import { ThemeProvider } from "@/lib/theme-provider";
 import { InvestmentProvider } from "@/lib/investment-context";
 import { RechargeProvider } from "@/lib/recharge-context";
 import { ReferralProvider } from "@/lib/referral-context";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
+import { WithdrawalProvider } from "@/lib/withdrawal-context";
 import {
   SafeAreaFrameContext,
   SafeAreaInsetsContext,
@@ -29,7 +31,7 @@ export const unstable_settings = {
   anchor: "(tabs)",
 };
 
-export default function RootLayout() {
+function RootLayoutContent() {
   const initialInsets = initialWindowMetrics?.insets ?? DEFAULT_WEB_INSETS;
   const initialFrame = initialWindowMetrics?.frame ?? DEFAULT_WEB_FRAME;
 
@@ -85,8 +87,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <InvestmentProvider>
         <RechargeProvider>
-          <ReferralProvider>
-            <trpc.Provider client={trpcClient} queryClient={queryClient}>
+          <WithdrawalProvider>
+            <ReferralProvider>
+              <trpc.Provider client={trpcClient} queryClient={queryClient}>
               <QueryClientProvider client={queryClient}>
               {/* Default to hiding native headers so raw route segments don't appear (e.g. "(tabs)", "products/[id]"). */}
               {/* If a screen needs the native header, explicitly enable it and set a human title via Stack.Screen options. */}
@@ -98,7 +101,8 @@ export default function RootLayout() {
               <StatusBar style="auto" />
             </QueryClientProvider>
           </trpc.Provider>
-          </ReferralProvider>
+            </ReferralProvider>
+          </WithdrawalProvider>
         </RechargeProvider>
       </InvestmentProvider>
     </GestureHandlerRootView>
@@ -124,5 +128,13 @@ export default function RootLayout() {
     <ThemeProvider>
       <SafeAreaProvider initialMetrics={providerInitialMetrics}>{content}</SafeAreaProvider>
     </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootLayoutContent />
+    </AuthProvider>
   );
 }

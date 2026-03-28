@@ -104,3 +104,41 @@
 - [x] Mostrar ganancias por referidos
 - [x] Agregar tab de referidos en navegación
 
+
+
+## Fase 15: Autenticación y Registro
+- [x] Crear pantalla de login con usuario y contraseña
+- [x] Crear pantalla de registro de nuevos usuarios
+- [x] Implementar validación de credenciales
+- [x] Guardar usuarios en base de datos local
+- [x] Implementar sesión de usuario autenticado
+- [x] Agregar opción de cerrar sesión
+
+## Fase 16: Comisiones Automáticas
+- [ ] Calcular comisión automática cuando referido invierte
+- [ ] Agregar comisión al saldo del referidor
+- [ ] Registrar historial de comisiones ganadas
+- [ ] Mostrar comisiones en tiempo real en perfil
+
+## Fase 17: Sistema de Retiros
+- [x] Crear pantalla de retiros
+- [x] Permitir retiros solo cada 15 días
+- [x] Validar que haya saldo disponible
+- [x] Registrar historial de retiros
+- [x] Mostrar próxima fecha de retiro disponible
+- [x] Agregar métodos de retiro (bancario, etc)
+
+## Fase 18: Visualización Diaria del Crecimiento
+- [ ] Mostrar gráfico de crecimiento diario
+- [ ] Calcular ganancia proporcional por día
+- [ ] Actualizar visualización en tiempo real
+- [ ] Mostrar progreso en porcentaje
+- [ ] Agregar notificaciones de hito
+
+## Fase 19: Diseño Mejorado con Temática China
+- [ ] Actualizar colores a temática china (rojo/oro)
+- [ ] Agregar iconografía china
+- [ ] Mejorar interfaz general
+- [ ] Agregar animaciones sutiles
+- [ ] Optimizar tipografía y espaciado
+

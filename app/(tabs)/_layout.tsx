@@ -63,6 +63,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.2.fill" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="withdraw"
+        options={{
+          title: "Retirar",
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="arrow.up.right" color={color} />,
+        }}
+      />
     </Tabs>
   );
 }
