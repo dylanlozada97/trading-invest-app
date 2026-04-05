@@ -115,10 +115,10 @@
 - [x] Agregar opción de cerrar sesión
 
 ## Fase 16: Comisiones Automáticas
-- [ ] Calcular comisión automática cuando referido invierte
-- [ ] Agregar comisión al saldo del referidor
-- [ ] Registrar historial de comisiones ganadas
-- [ ] Mostrar comisiones en tiempo real en perfil
+- [x] Calcular comisión automática cuando referido invierte
+- [x] Agregar comisión al saldo del referidor
+- [x] Registrar historial de comisiones ganadas
+- [x] Mostrar comisiones en tiempo real en perfil
 
 ## Fase 17: Sistema de Retiros
 - [x] Crear pantalla de retiros
@@ -165,3 +165,22 @@
 - [x] Mejorar tipografía y espaciado
 - [x] Agregar animaciones sutiles
 
+
+## Fase 23: Conectar App con Backend y Panel Admin
+- [x] Conectar registro de app con backend (usuarios aparecen en panel admin)
+- [x] Conectar login de app con backend
+- [x] Conectar inversiones con backend
+- [x] Conectar recargas con backend
+- [x] Conectar retiros con backend
+- [x] Conectar comisiones con backend
+- [x] Panel admin lee datos reales del backend API
+- [x] Flujo completo verificado: registro → panel admin muestra usuario
+
+## Fase 24: Pulido Final para Presentación
+- [x] Proteger panel admin con contraseña
+- [x] Mejorar validaciones de formularios
+- [x] Agregar mensajes de error claros
+- [x] Optimizar carga de datos
+- [x] Pruebas de flujos completos
+- [ ] Checkpoint final
+- [x] Documentación de uso

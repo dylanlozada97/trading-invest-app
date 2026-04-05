@@ -1,31 +1,81 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, AuthContextType } from '@/types/auth';
+import { getApiBaseUrl } from '@/constants/oauth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const STORAGE_KEYS = {
-  USERS: 'users_list',
   CURRENT_USER: 'current_user',
 };
+
+const API_BASE = getApiBaseUrl();
+
+// Helper to call tRPC endpoints
+async function trpcCall(path: string, input?: any, method: 'GET' | 'POST' = 'POST') {
+  const url = `${API_BASE}/api/trpc/${path}`;
+
+  if (method === 'GET') {
+    const encodedInput = input ? `?input=${encodeURIComponent(JSON.stringify({ json: input }))}` : '';
+    const response = await fetch(`${url}${encodedInput}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message || 'Error del servidor');
+    return data.result?.data?.json;
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ json: input }),
+  });
+  const data = await response.json();
+  if (data.error) {
+    const errorMsg = data.error.json?.message || data.error.message || 'Error del servidor';
+    throw new Error(errorMsg);
+  }
+  return data.result?.data?.json;
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [users, setUsers] = useState<User[]>([]);
 
-  // Cargar datos persistidos
+  // Load saved user on startup
   useEffect(() => {
-    const loadData = async () => {
+    const loadUser = async () => {
       try {
-        const savedUsers = await AsyncStorage.getItem(STORAGE_KEYS.USERS);
-        const savedCurrentUser = await AsyncStorage.getItem(STORAGE_KEYS.CURRENT_USER);
-
-        if (savedUsers) {
-          setUsers(JSON.parse(savedUsers));
-        }
-        if (savedCurrentUser) {
-          setUser(JSON.parse(savedCurrentUser));
+        const savedUser = await AsyncStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser);
+          // Refresh user data from server
+          try {
+            const freshData = await trpcCall('appAuth.getProfile', { userId: parsed.id }, 'GET');
+            if (freshData) {
+              const refreshedUser: User = {
+                id: String(freshData.id),
+                username: freshData.username,
+                email: freshData.email,
+                password: '',
+                createdAt: freshData.createdAt,
+                referralCode: freshData.referralCode,
+                referrerUserId: freshData.referrerUserId ? String(freshData.referrerUserId) : undefined,
+                balance: freshData.balance,
+                totalReferrals: freshData.totalReferrals,
+              };
+              setUser(refreshedUser);
+              await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(refreshedUser));
+            } else {
+              setUser(parsed);
+            }
+          } catch {
+            // If server is unavailable, use cached data
+            setUser(parsed);
+          }
         }
       } catch (error) {
         console.error('Error loading auth data:', error);
@@ -33,16 +83,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       }
     };
-
-    loadData();
+    loadUser();
   }, []);
 
-  // Guardar usuarios
-  useEffect(() => {
-    AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-  }, [users]);
-
-  // Guardar usuario actual
+  // Save current user to storage
   useEffect(() => {
     if (user) {
       AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
@@ -51,65 +95,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  const generateReferralCode = (username: string): string => {
-    return `REF${username.substring(0, 3).toUpperCase()}${Date.now().toString().slice(-4)}`;
-  };
-
   const register = async (
     username: string,
     email: string,
     password: string,
     referralCode?: string
   ): Promise<void> => {
-    // Validar que el usuario no exista
-    const existingUser = users.find((u) => u.username === username || u.email === email);
-    if (existingUser) {
-      throw new Error('El usuario o correo ya existe');
-    }
-
-    // Validar contraseña
-    if (password.length < 6) {
-      throw new Error('La contraseña debe tener al menos 6 caracteres');
-    }
-
-    // Validar correo
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      throw new Error('Correo inválido');
-    }
-
-    // Buscar referidor si se proporciona código
-    let referrerUserId: string | undefined;
-    if (referralCode) {
-      const referrer = users.find((u) => u.referralCode === referralCode);
-      if (!referrer) {
-        throw new Error('Código de referido inválido');
-      }
-      referrerUserId = referrer.id;
-    }
-
-    const newUser: User = {
-      id: Date.now().toString(),
+    // Call backend API
+    const result = await trpcCall('appAuth.register', {
       username,
       email,
-      password, // En producción, esto debería estar hasheado
+      password,
+      referralCode: referralCode || undefined,
+    });
+
+    const newUser: User = {
+      id: String(result.id),
+      username: result.username,
+      email: result.email,
+      password: '',
       createdAt: new Date().toISOString(),
-      referralCode: generateReferralCode(username),
-      referrerUserId,
+      referralCode: result.referralCode,
+      balance: result.balance,
+      totalReferrals: result.totalReferrals,
     };
 
-    setUsers((prev) => [...prev, newUser]);
     setUser(newUser);
   };
 
   const login = async (username: string, password: string): Promise<void> => {
-    const foundUser = users.find((u) => u.username === username && u.password === password);
+    // Call backend API
+    const result = await trpcCall('appAuth.login', { username, password });
 
-    if (!foundUser) {
-      throw new Error('Usuario o contraseña incorrectos');
-    }
+    const loggedInUser: User = {
+      id: String(result.id),
+      username: result.username,
+      email: result.email,
+      password: '',
+      createdAt: new Date().toISOString(),
+      referralCode: result.referralCode,
+      referrerUserId: result.referrerUserId ? String(result.referrerUserId) : undefined,
+      balance: result.balance,
+      totalReferrals: result.totalReferrals,
+    };
 
-    setUser(foundUser);
+    setUser(loggedInUser);
   };
 
   const logout = () => {
@@ -118,6 +148,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const getCurrentUser = (): User | null => {
     return user;
+  };
+
+  // Refresh user data from server
+  const refreshUser = async () => {
+    if (!user) return;
+    try {
+      const freshData = await trpcCall('appAuth.getProfile', { userId: Number(user.id) }, 'GET');
+      if (freshData) {
+        const refreshedUser: User = {
+          ...user,
+          balance: freshData.balance,
+          totalReferrals: freshData.totalReferrals,
+        };
+        setUser(refreshedUser);
+      }
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+    }
   };
 
   const value: AuthContextType = {

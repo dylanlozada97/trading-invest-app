@@ -10,6 +10,8 @@ export interface User {
   createdAt: string;
   referralCode: string;
   referrerUserId?: string;
+  balance?: number;
+  totalReferrals?: number;
 }
 
 export interface AuthContextType {
