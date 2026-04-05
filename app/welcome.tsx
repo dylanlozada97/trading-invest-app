@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Text, View, TextInput, ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
+import { Text, View, TextInput, ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useRouter } from "expo-router";
 import { trpc } from "@/lib/trpc";
 import { saveUser, generateReferralCode } from "@/lib/auth-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Pressable } from "react-native";
+
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -123,9 +123,9 @@ export default function WelcomeScreen() {
               <Text style={s.codeText}>{newReferralCode}</Text>
             </View>
             <Text style={s.modalHint}>Comparte este código con tus amigos para ganar comisiones</Text>
-            <Pressable onPress={handleContinue} style={s.continueBtn}>
+            <TouchableOpacity onPress={handleContinue} style={s.continueBtn} activeOpacity={0.7}>
               <Text style={s.continueBtnText}>Continuar a la Plataforma</Text>
-            </Pressable>
+            </TouchableOpacity>
           </View>
         </View>
       </ScreenContainer>
@@ -144,12 +144,12 @@ export default function WelcomeScreen() {
 
           <View style={s.formCard}>
             <View style={s.tabRow}>
-              <Pressable onPress={() => setIsLogin(false)} style={[s.tab, !isLogin && s.tabActive]}>
+              <TouchableOpacity onPress={() => setIsLogin(false)} style={[s.tab, !isLogin && s.tabActive]} activeOpacity={0.7}>
                 <Text style={[s.tabText, !isLogin && s.tabTextActive]}>Registrarse</Text>
-              </Pressable>
-              <Pressable onPress={() => setIsLogin(true)} style={[s.tab, isLogin && s.tabActive]}>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setIsLogin(true)} style={[s.tab, isLogin && s.tabActive]} activeOpacity={0.7}>
                 <Text style={[s.tabText, isLogin && s.tabTextActive]}>Iniciar Sesión</Text>
-              </Pressable>
+              </TouchableOpacity>
             </View>
 
             {!isLogin ? (
@@ -162,9 +162,9 @@ export default function WelcomeScreen() {
                 <TextInput style={s.input} placeholder="Mínimo 6 caracteres" placeholderTextColor="#999" value={password} onChangeText={setPassword} secureTextEntry />
                 <Text style={s.label}>Código de Referido (Opcional)</Text>
                 <TextInput style={s.input} placeholder="Si alguien te invitó, pega su código" placeholderTextColor="#999" value={referralInput} onChangeText={setReferralInput} autoCapitalize="characters" />
-                <Pressable onPress={handleRegister} disabled={loading} style={[s.submitBtn, loading && s.submitBtnDisabled]}>
+                <TouchableOpacity onPress={handleRegister} disabled={loading} style={[s.submitBtn, loading && s.submitBtnDisabled]} activeOpacity={0.7}>
                   {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.submitBtnText}>Registrarse</Text>}
-                </Pressable>
+                </TouchableOpacity>
               </View>
             ) : (
               <View style={s.formBody}>
@@ -172,9 +172,9 @@ export default function WelcomeScreen() {
                 <TextInput style={s.input} placeholder="Tu nombre de usuario" placeholderTextColor="#999" value={loginUser} onChangeText={setLoginUser} autoCapitalize="none" />
                 <Text style={s.label}>Contraseña</Text>
                 <TextInput style={s.input} placeholder="Tu contraseña" placeholderTextColor="#999" value={loginPass} onChangeText={setLoginPass} secureTextEntry />
-                <Pressable onPress={handleLogin} disabled={loading} style={[s.submitBtn, loading && s.submitBtnDisabled]}>
+                <TouchableOpacity onPress={handleLogin} disabled={loading} style={[s.submitBtn, loading && s.submitBtnDisabled]} activeOpacity={0.7}>
                   {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.submitBtnText}>Iniciar Sesión</Text>}
-                </Pressable>
+                </TouchableOpacity>
               </View>
             )}
           </View>

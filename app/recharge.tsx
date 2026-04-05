@@ -1,18 +1,76 @@
 import { useState } from "react";
-import { Text, View, TextInput, ScrollView, Alert, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
+import { Text, View, TextInput, ScrollView, Alert, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Image, TouchableOpacity } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useRouter } from "expo-router";
 import { trpc } from "@/lib/trpc";
 import { loadUser } from "@/lib/auth-store";
-import { Pressable } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 
 export default function RechargeScreen() {
   const router = useRouter();
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
   const [loading, setLoading] = useState(false);
+  const [proofImage, setProofImage] = useState<string | null>(null);
 
   const createRechargeMutation = trpc.investment.createRecharge.useMutation();
+
+  const pickImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permisos", "Necesitamos acceso a tu galería para subir el comprobante");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.7,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setProofImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert("Error", "No se pudo seleccionar la imagen");
+    }
+  };
+
+  const takePhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permisos", "Necesitamos acceso a tu cámara para tomar la foto");
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        quality: 0.7,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setProofImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert("Error", "No se pudo tomar la foto");
+    }
+  };
+
+  const showImageOptions = () => {
+    Alert.alert(
+      "Subir Comprobante",
+      "¿Cómo quieres subir el comprobante?",
+      [
+        { text: "Tomar Foto", onPress: takePhoto },
+        { text: "Galería", onPress: pickImage },
+        { text: "Cancelar", style: "cancel" },
+      ]
+    );
+  };
 
   const handleRecharge = async () => {
     const numAmount = parseFloat(amount);
@@ -22,6 +80,10 @@ export default function RechargeScreen() {
     }
     if (!reference.trim()) {
       Alert.alert("Error", "Ingresa la referencia del depósito");
+      return;
+    }
+    if (!proofImage) {
+      Alert.alert("Error", "Debes subir la foto del comprobante de pago");
       return;
     }
 
@@ -37,6 +99,7 @@ export default function RechargeScreen() {
         userId: user.id,
         amount: numAmount.toString(),
         reference: reference.trim(),
+        proofUrl: proofImage,
       });
 
       Alert.alert(
@@ -54,18 +117,18 @@ export default function RechargeScreen() {
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           <View style={s.header}>
-            <Pressable onPress={() => router.back()} style={s.backBtn}>
+            <TouchableOpacity onPress={() => router.back()} style={s.backBtn} activeOpacity={0.7}>
               <Text style={s.backText}>← Volver</Text>
-            </Pressable>
+            </TouchableOpacity>
             <Text style={s.headerTitle}>Recargar Saldo</Text>
           </View>
 
           <View style={s.content}>
             {/* Bank Info */}
             <View style={s.bankCard}>
-              <Text style={s.bankTitle}>Datos para Depositar</Text>
+              <Text style={s.bankTitle}>📋 Datos para Depositar</Text>
               <View style={s.bankRow}>
                 <Text style={s.bankLabel}>Banco:</Text>
                 <Text style={s.bankValue}>Bancolombia</Text>
@@ -88,9 +151,9 @@ export default function RechargeScreen() {
             <Text style={s.label}>Monto a Recargar</Text>
             <View style={s.quickAmounts}>
               {[50000, 100000, 200000, 500000].map((a) => (
-                <Pressable key={a} onPress={() => setAmount(a.toString())} style={[s.quickBtn, amount === a.toString() && s.quickBtnActive]}>
+                <TouchableOpacity key={a} onPress={() => setAmount(a.toString())} style={[s.quickBtn, amount === a.toString() && s.quickBtnActive]} activeOpacity={0.7}>
                   <Text style={[s.quickBtnText, amount === a.toString() && s.quickBtnTextActive]}>${a.toLocaleString()}</Text>
-                </Pressable>
+                </TouchableOpacity>
               ))}
             </View>
 
@@ -112,9 +175,26 @@ export default function RechargeScreen() {
               onChangeText={setReference}
             />
 
-            <Pressable onPress={handleRecharge} disabled={loading} style={[s.submitBtn, loading && s.submitBtnDisabled]}>
+            {/* Photo Upload */}
+            <Text style={s.label}>Foto del Comprobante *</Text>
+            <TouchableOpacity onPress={showImageOptions} style={s.photoBtn} activeOpacity={0.7}>
+              {proofImage ? (
+                <View style={s.photoPreview}>
+                  <Image source={{ uri: proofImage }} style={s.photoImage} />
+                  <Text style={s.photoChangeText}>Cambiar foto</Text>
+                </View>
+              ) : (
+                <View style={s.photoPlaceholder}>
+                  <Text style={s.photoIcon}>📷</Text>
+                  <Text style={s.photoText}>Tomar foto o seleccionar de galería</Text>
+                  <Text style={s.photoSubtext}>Toca aquí para subir el comprobante</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={handleRecharge} disabled={loading} style={[s.submitBtn, loading && s.submitBtnDisabled]} activeOpacity={0.7}>
               {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.submitBtnText}>Enviar Recarga</Text>}
-            </Pressable>
+            </TouchableOpacity>
 
             <Text style={s.note}>Tu recarga será revisada y aprobada por el administrador en las próximas horas.</Text>
           </View>
@@ -142,6 +222,14 @@ const s = StyleSheet.create({
   quickBtnText: { color: "#9BA1A6", fontWeight: "600" },
   quickBtnTextActive: { color: "#DC2626" },
   input: { borderWidth: 1, borderColor: "#334155", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: "#ECEDEE", backgroundColor: "#16213e" },
+  photoBtn: { borderWidth: 2, borderColor: "#334155", borderRadius: 14, borderStyle: "dashed", overflow: "hidden" },
+  photoPlaceholder: { padding: 30, alignItems: "center" },
+  photoIcon: { fontSize: 40, marginBottom: 8 },
+  photoText: { fontSize: 15, color: "#ECEDEE", fontWeight: "600", marginBottom: 4 },
+  photoSubtext: { fontSize: 13, color: "#9BA1A6" },
+  photoPreview: { alignItems: "center" },
+  photoImage: { width: "100%", height: 200, resizeMode: "contain" },
+  photoChangeText: { paddingVertical: 10, color: "#DC2626", fontWeight: "600", fontSize: 14 },
   submitBtn: { backgroundColor: "#DC2626", paddingVertical: 16, borderRadius: 12, alignItems: "center", marginTop: 24 },
   submitBtnDisabled: { opacity: 0.6 },
   submitBtnText: { color: "#fff", fontSize: 17, fontWeight: "bold" },

@@ -1,9 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
-import { Text, View, ScrollView, Alert, StyleSheet, RefreshControl } from "react-native";
+import { Text, View, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { loadUser, AppUser } from "@/lib/auth-store";
 import { useRouter } from "expo-router";
-import { Pressable } from "react-native";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -37,27 +36,27 @@ export default function HomeScreen() {
         <View style={s.header}>
           <Text style={s.greeting}>Hola, {user.username} 👋</Text>
           <Text style={s.balanceLabel}>Saldo Disponible</Text>
-          <Text style={s.balanceAmount}>${parseFloat(user.balance).toFixed(2)}</Text>
+          <Text style={s.balanceAmount}>${parseFloat(user.balance).toLocaleString()}</Text>
         </View>
 
         {/* Quick Actions */}
         <View style={s.actionsRow}>
-          <Pressable onPress={() => router.push("/recharge" as any)} style={s.actionBtn}>
+          <TouchableOpacity onPress={() => router.push("/recharge" as any)} style={s.actionBtn} activeOpacity={0.7}>
             <Text style={s.actionIcon}>💳</Text>
             <Text style={s.actionText}>Recargar</Text>
-          </Pressable>
-          <Pressable onPress={() => router.push("/invest" as any)} style={s.actionBtn}>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/invest" as any)} style={s.actionBtn} activeOpacity={0.7}>
             <Text style={s.actionIcon}>📈</Text>
             <Text style={s.actionText}>Invertir</Text>
-          </Pressable>
-          <Pressable onPress={() => router.push("/withdraw" as any)} style={s.actionBtn}>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/withdraw" as any)} style={s.actionBtn} activeOpacity={0.7}>
             <Text style={s.actionIcon}>🏦</Text>
             <Text style={s.actionText}>Retirar</Text>
-          </Pressable>
-          <Pressable onPress={() => router.push("/referrals" as any)} style={s.actionBtn}>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/referrals" as any)} style={s.actionBtn} activeOpacity={0.7}>
             <Text style={s.actionIcon}>🎁</Text>
             <Text style={s.actionText}>Referidos</Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
 
         {/* Info Cards */}

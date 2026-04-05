@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import path from "path";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
@@ -67,6 +68,10 @@ async function startServer() {
       createContext,
     }),
   );
+
+  // Serve admin panel from public directory
+  const publicDir = path.resolve(process.cwd(), "public");
+  app.use(express.static(publicDir));
 
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);

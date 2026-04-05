@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import { Text, View, TextInput, ScrollView, Alert, StyleSheet, ActivityIndicator } from "react-native";
+import { Text, View, TextInput, ScrollView, Alert, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useRouter } from "expo-router";
 import { trpc } from "@/lib/trpc";
 import { loadUser, saveUser, AppUser } from "@/lib/auth-store";
-import { Pressable } from "react-native";
 
 export default function InvestScreen() {
   const router = useRouter();
@@ -75,9 +74,9 @@ export default function InvestScreen() {
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
         <View style={s.header}>
-          <Pressable onPress={() => router.back()} style={s.backBtn}>
+          <TouchableOpacity onPress={() => router.back()} style={s.backBtn} activeOpacity={0.7}>
             <Text style={s.backText}>← Volver</Text>
-          </Pressable>
+          </TouchableOpacity>
           <Text style={s.headerTitle}>Invertir</Text>
           <Text style={s.headerSub}>Saldo: ${user ? parseFloat(user.balance).toLocaleString() : "0"}</Text>
         </View>
@@ -92,10 +91,10 @@ export default function InvestScreen() {
           <Text style={s.label}>Selecciona un Monto</Text>
           <View style={s.quickAmounts}>
             {[50000, 100000, 200000, 500000, 1000000].map((a) => (
-              <Pressable key={a} onPress={() => setAmount(a.toString())} style={[s.quickBtn, amount === a.toString() && s.quickBtnActive]}>
+              <TouchableOpacity key={a} onPress={() => setAmount(a.toString())} style={[s.quickBtn, amount === a.toString() && s.quickBtnActive]} activeOpacity={0.7}>
                 <Text style={[s.quickBtnText, amount === a.toString() && s.quickBtnTextActive]}>${a.toLocaleString()}</Text>
                 <Text style={s.quickGain}>+${(a * 0.6).toLocaleString()}</Text>
-              </Pressable>
+              </TouchableOpacity>
             ))}
           </View>
 
@@ -126,9 +125,9 @@ export default function InvestScreen() {
             </View>
           )}
 
-          <Pressable onPress={handleInvest} disabled={loading} style={[s.submitBtn, loading && s.submitBtnDisabled]}>
+          <TouchableOpacity onPress={handleInvest} disabled={loading} style={[s.submitBtn, loading && s.submitBtnDisabled]} activeOpacity={0.7}>
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.submitBtnText}>Invertir Ahora</Text>}
-          </Pressable>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </ScreenContainer>

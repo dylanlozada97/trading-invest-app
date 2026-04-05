@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Text, View, TextInput, ScrollView, Alert, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
+import { Text, View, TextInput, ScrollView, Alert, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableOpacity } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useRouter } from "expo-router";
 import { trpc } from "@/lib/trpc";
 import { loadUser } from "@/lib/auth-store";
-import { Pressable } from "react-native";
+
 
 export default function WithdrawScreen() {
   const router = useRouter();
@@ -65,9 +65,9 @@ export default function WithdrawScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
           <View style={s.header}>
-            <Pressable onPress={() => router.back()} style={s.backBtn}>
+            <TouchableOpacity onPress={() => router.back()} style={s.backBtn} activeOpacity={0.7}>
               <Text style={s.backText}>← Volver</Text>
-            </Pressable>
+            </TouchableOpacity>
             <Text style={s.headerTitle}>Retirar Fondos</Text>
           </View>
 
@@ -110,9 +110,9 @@ export default function WithdrawScreen() {
               onChangeText={setAccountHolder}
             />
 
-            <Pressable onPress={handleWithdraw} disabled={loading} style={[s.submitBtn, loading && s.submitBtnDisabled]}>
+            <TouchableOpacity onPress={handleWithdraw} disabled={loading} style={[s.submitBtn, loading && s.submitBtnDisabled]} activeOpacity={0.7}>
               {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.submitBtnText}>Solicitar Retiro</Text>}
-            </Pressable>
+            </TouchableOpacity>
 
             <Text style={s.note}>Tu retiro será procesado por el administrador en un plazo de 24-48 horas.</Text>
           </View>
