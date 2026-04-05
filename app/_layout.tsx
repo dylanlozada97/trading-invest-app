@@ -8,11 +8,6 @@ import "react-native-reanimated";
 import { Platform } from "react-native";
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
-import { InvestmentProvider } from "@/lib/investment-context";
-import { RechargeProvider } from "@/lib/recharge-context";
-import { ReferralProvider } from "@/lib/referral-context";
-import { AuthProvider, useAuth } from "@/lib/auth-context";
-import { WithdrawalProvider } from "@/lib/withdrawal-context";
 import {
   SafeAreaFrameContext,
   SafeAreaInsetsContext,
@@ -23,7 +18,6 @@ import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 
 import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
-import { useRouter } from "expo-router";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -32,22 +26,12 @@ export const unstable_settings = {
   anchor: "(tabs)",
 };
 
-function RootLayoutContent() {
-  const { isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
+export default function RootLayout() {
   const initialInsets = initialWindowMetrics?.insets ?? DEFAULT_WEB_INSETS;
   const initialFrame = initialWindowMetrics?.frame ?? DEFAULT_WEB_FRAME;
 
   const [insets, setInsets] = useState<EdgeInsets>(initialInsets);
   const [frame, setFrame] = useState<Rect>(initialFrame);
-
-  useEffect(() => {
-    if (!isLoading) {
-      if (!isAuthenticated) {
-        router.replace('/welcome');
-      }
-    }
-  }, [isAuthenticated, isLoading]);
 
   // Initialize Manus runtime for cookie injection from parent container
   useEffect(() => {
@@ -96,27 +80,18 @@ function RootLayoutContent() {
 
   const content = (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <InvestmentProvider>
-        <RechargeProvider>
-          <WithdrawalProvider>
-            <ReferralProvider>
-              <trpc.Provider client={trpcClient} queryClient={queryClient}>
-              <QueryClientProvider client={queryClient}>
-              {/* Default to hiding native headers so raw route segments don't appear (e.g. "(tabs)", "products/[id]"). */}
-              {/* If a screen needs the native header, explicitly enable it and set a human title via Stack.Screen options. */}
-              {/* in order for ios apps tab switching to work properly, use presentation: "fullScreenModal" for login page, whenever you decide to use presentation: "modal*/}
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="welcome" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="oauth/callback" />
-              </Stack>
-              <StatusBar style="auto" />
-            </QueryClientProvider>
-          </trpc.Provider>
-            </ReferralProvider>
-          </WithdrawalProvider>
-        </RechargeProvider>
-      </InvestmentProvider>
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          {/* Default to hiding native headers so raw route segments don't appear (e.g. "(tabs)", "products/[id]"). */}
+          {/* If a screen needs the native header, explicitly enable it and set a human title via Stack.Screen options. */}
+          {/* in order for ios apps tab switching to work properly, use presentation: "fullScreenModal" for login page, whenever you decide to use presentation: "modal*/}
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="oauth/callback" />
+          </Stack>
+          <StatusBar style="auto" />
+        </QueryClientProvider>
+      </trpc.Provider>
     </GestureHandlerRootView>
   );
 
@@ -140,13 +115,5 @@ function RootLayoutContent() {
     <ThemeProvider>
       <SafeAreaProvider initialMetrics={providerInitialMetrics}>{content}</SafeAreaProvider>
     </ThemeProvider>
-  );
-}
-
-export default function RootLayout() {
-  return (
-    <AuthProvider>
-      <RootLayoutContent />
-    </AuthProvider>
   );
 }
