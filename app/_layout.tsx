@@ -45,8 +45,6 @@ function RootLayoutContent() {
     if (!isLoading) {
       if (!isAuthenticated) {
         router.replace('/welcome');
-      } else {
-        router.replace('/(tabs)');
       }
     }
   }, [isAuthenticated, isLoading]);

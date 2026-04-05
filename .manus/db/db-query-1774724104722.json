@@ -1,9 +1,0 @@
-{
-  "query": "DELETE FROM transactions; DELETE FROM commissions; DELETE FROM investments; DELETE FROM recharges; DELETE FROM withdrawals; DELETE FROM app_users;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2228w7JTg9X1VtW.root --database PTyWxGGRGRsKiYyzvuRuFr --execute DELETE FROM transactions; DELETE FROM commissions; DELETE FROM investments; DELETE FROM recharges; DELETE FROM withdrawals; DELETE FROM app_users;",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 152
-}
