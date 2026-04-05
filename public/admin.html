@@ -1013,12 +1013,16 @@
         // Load all data from API
         async function loadAllData() {
             try {
+                console.log('Loading data from API:', API_BASE_URL);
+                
                 // Load stats
                 const stats = await trpcGet('admin.stats');
+                console.log('Stats loaded:', stats);
                 if (stats) updateDashboard(stats);
 
                 // Load users
                 const users = await trpcGet('admin.users');
+                console.log('Users loaded:', users);
                 allData.users = (users || []).map(u => ({
                     ...u,
                     balance: parseFloat(u.balance) || 0,
@@ -1029,40 +1033,76 @@
 
                 // Load investments with user names
                 const investments = await trpcGet('admin.investments');
+                console.log('Investments loaded:', investments);
                 allData.investments = (investments || []).map(inv => {
                     const user = allData.users.find(u => u.id === inv.userId);
-                    return { ...inv, userName: user?.username || 'Usuario #' + inv.userId };
+                    const investDate = new Date(inv.createdAt);
+                    const completionDate = new Date(investDate);
+                    completionDate.setDate(completionDate.getDate() + 15);
+                    const amount = parseFloat(inv.amount) || 0;
+                    const expectedGain = amount * 0.6;
+                    const today = new Date();
+                    const totalDays = 15;
+                    const elapsed = Math.max(0, (today - investDate) / (1000*60*60*24));
+                    const currentGain = Math.min(expectedGain, (elapsed / totalDays) * expectedGain);
+                    return {
+                        ...inv,
+                        userName: user?.username || 'Usuario #' + inv.userId,
+                        investmentDate: inv.createdAt,
+                        completionDate: completionDate.toISOString(),
+                        expectedGain: expectedGain.toFixed(2),
+                        currentGain: currentGain.toFixed(2)
+                    };
                 });
                 renderInvestmentsTable();
                 renderUpcomingPayments();
 
                 // Load recharges with user names
                 const recharges = await trpcGet('admin.recharges');
+                console.log('Recharges loaded:', recharges);
                 allData.recharges = (recharges || []).map(r => {
                     const user = allData.users.find(u => u.id === r.userId);
-                    return { ...r, userName: user?.username || 'Usuario #' + r.userId, bankReference: r.reference };
+                    return {
+                        ...r,
+                        userName: user?.username || 'Usuario #' + r.userId,
+                        bankReference: r.reference || '-',
+                        proofImageUrl: r.proofUrl || null
+                    };
                 });
                 renderRechargesTable();
 
                 // Load withdrawals with user names
                 const withdrawals = await trpcGet('admin.withdrawals');
+                console.log('Withdrawals loaded:', withdrawals);
                 allData.withdrawals = (withdrawals || []).map(w => {
                     const user = allData.users.find(u => u.id === w.userId);
-                    return { ...w, userName: user?.username || 'Usuario #' + w.userId, bankAccount: w.accountNumber };
+                    return {
+                        ...w,
+                        userName: user?.username || 'Usuario #' + w.userId,
+                        bankAccount: w.accountNumber || '-',
+                        accountHolder: user?.username || '-'
+                    };
                 });
                 renderWithdrawalsTable();
 
                 // Load commissions with user names
                 const commissions = await trpcGet('admin.commissions');
+                console.log('Commissions loaded:', commissions);
                 allData.commissions = (commissions || []).map(c => {
                     const referrer = allData.users.find(u => u.id === c.referrerId);
                     const referee = allData.users.find(u => u.id === c.refereeId);
-                    return { ...c, referrerName: referrer?.username || 'Usuario #' + c.referrerId, refereeName: referee?.username || 'Usuario #' + c.refereeId, investmentId: '-' };
+                    return {
+                        ...c,
+                        referrerName: referrer?.username || 'Usuario #' + c.referrerId,
+                        refereeName: referee?.username || 'Usuario #' + c.refereeId,
+                        investmentId: '-'
+                    };
                 });
                 renderCommissionsTable();
 
                 // Load transactions with user names
                 const transactions = await trpcGet('admin.transactions');
+                console.log('Transactions loaded:', transactions);
                 allData.transactions = (transactions || []).map(t => {
                     const user = allData.users.find(u => u.id === t.userId);
                     return { ...t, userName: user?.username || 'Usuario #' + t.userId, relatedId: t.id };
@@ -1070,8 +1110,13 @@
                 renderTransactionsTable();
 
                 loadSettings();
+                console.log('All data loaded successfully');
             } catch (error) {
                 console.error('Error loading data:', error);
+                // Show error in dashboard
+                document.querySelectorAll('.empty-state').forEach(el => {
+                    el.textContent = 'Error al cargar datos. Reintentando...';
+                });
             }
         }
 
@@ -1085,21 +1130,27 @@
 
         // Update dashboard
         function updateDashboard(stats) {
-            document.getElementById('totalBalance').textContent = (stats.totalBalance || 0).toFixed(2);
+            const tb = parseFloat(stats.totalBalance) || 0;
+            const pra = parseFloat(stats.pendingRechargesAmount) || 0;
+            const pwa = parseFloat(stats.pendingWithdrawalsAmount) || 0;
+            const tc = parseFloat(stats.totalCommissions) || 0;
+            const tdc = parseFloat(stats.todayCommissions) || 0;
+
+            document.getElementById('totalBalance').textContent = tb.toFixed(2);
             document.getElementById('activeInvestments').textContent = stats.activeInvestments || 0;
             document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
             document.getElementById('pendingRecharges').textContent = stats.pendingRecharges || 0;
 
-            document.getElementById('dashboardTotalBalance').textContent = (stats.totalBalance || 0).toFixed(2);
+            document.getElementById('dashboardTotalBalance').textContent = tb.toFixed(2);
             document.getElementById('dashboardActiveInvestments').textContent = stats.activeInvestments || 0;
-            document.getElementById('dashboardPendingRecharges').textContent = (stats.pendingRechargesAmount || 0).toFixed(2);
-            document.getElementById('dashboardPendingWithdrawals').textContent = (stats.pendingWithdrawalsAmount || 0).toFixed(2);
-            document.getElementById('dashboardTotalCommissions').textContent = (stats.totalCommissions || 0).toFixed(2);
+            document.getElementById('dashboardPendingRecharges').textContent = pra.toFixed(2);
+            document.getElementById('dashboardPendingWithdrawals').textContent = pwa.toFixed(2);
+            document.getElementById('dashboardTotalCommissions').textContent = tc.toFixed(2);
             document.getElementById('dashboardTotalUsers').textContent = stats.totalUsers || 0;
 
             document.getElementById('pendingRechargesCount').textContent = stats.pendingRecharges || 0;
             document.getElementById('pendingWithdrawalsCount').textContent = stats.pendingWithdrawals || 0;
-            document.getElementById('todayCommissions').textContent = (stats.todayCommissions || 0).toFixed(2);
+            document.getElementById('todayCommissions').textContent = tdc.toFixed(2);
             document.getElementById('newUsersToday').textContent = stats.newUsersToday || 0;
         }
 

@@ -21,3 +21,4 @@
 - [x] Botón invertir no funciona / no aparece (cambiado Pressable a TouchableOpacity)
 - [x] No se puede cargar foto de comprobante en recarga (agregado expo-image-picker)
 - [x] Panel admin se queda en "Cargando datos" (servido desde mismo servidor, sin CORS)
+- [x] Panel admin no muestra datos de usuarios registrados (campos corregidos)
