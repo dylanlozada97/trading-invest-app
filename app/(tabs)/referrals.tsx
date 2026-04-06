@@ -59,11 +59,12 @@ export default function ReferralsScreen() {
   }, [loadData, commissionsQuery]);
 
   const levels = [
-    { name: "Bronze", min: 0, pct: 10 },
-    { name: "Silver", min: 5, pct: 15 },
+    { name: "Bronce", min: 0, pct: 5 },
+    { name: "Bronze", min: 5, pct: 10 },
+    { name: "Silver", min: 10, pct: 15 },
     { name: "Gold", min: 15, pct: 20 },
-    { name: "Platinum", min: 30, pct: 25 },
-    { name: "Diamond", min: 50, pct: 30 },
+    { name: "Platinum", min: 20, pct: 25 },
+    { name: "Diamond", min: 25, pct: 30 },
   ];
 
   return (

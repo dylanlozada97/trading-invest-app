@@ -49,9 +49,10 @@ export function generateReferralCode(): string {
 }
 
 export function getReferralLevel(totalReferrals: number): { name: string; percentage: number } {
-  if (totalReferrals >= 50) return { name: "Diamond", percentage: 30 };
-  if (totalReferrals >= 30) return { name: "Platinum", percentage: 25 };
+  if (totalReferrals >= 25) return { name: "Diamond", percentage: 30 };
+  if (totalReferrals >= 20) return { name: "Platinum", percentage: 25 };
   if (totalReferrals >= 15) return { name: "Gold", percentage: 20 };
-  if (totalReferrals >= 5) return { name: "Silver", percentage: 15 };
-  return { name: "Bronze", percentage: 10 };
+  if (totalReferrals >= 10) return { name: "Silver", percentage: 15 };
+  if (totalReferrals >= 5) return { name: "Bronze", percentage: 10 };
+  return { name: "Bronce", percentage: 5 };
 }

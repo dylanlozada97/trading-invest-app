@@ -1121,11 +1121,12 @@
         }
 
         function calculateLevel(totalReferrals) {
-            if (totalReferrals >= 50) return 'Diamond';
-            if (totalReferrals >= 30) return 'Platinum';
+            if (totalReferrals >= 25) return 'Diamond';
+            if (totalReferrals >= 20) return 'Platinum';
             if (totalReferrals >= 15) return 'Gold';
-            if (totalReferrals >= 5) return 'Silver';
-            return 'Bronze';
+            if (totalReferrals >= 10) return 'Silver';
+            if (totalReferrals >= 5) return 'Bronze';
+            return 'Bronce';
         }
 
         // Update dashboard
