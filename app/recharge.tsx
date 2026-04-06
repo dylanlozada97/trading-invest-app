@@ -12,7 +12,9 @@ export default function RechargeScreen() {
   const [reference, setReference] = useState("");
   const [loading, setLoading] = useState(false);
   const [proofImage, setProofImage] = useState<string | null>(null);
+  const [proofBase64, setProofBase64] = useState<string | null>(null);
 
+  const uploadMutation = trpc.investment.uploadProofImage.useMutation();
   const createRechargeMutation = trpc.investment.createRecharge.useMutation();
 
   const pickImage = async () => {
@@ -24,14 +26,17 @@ export default function RechargeScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ["images"],
         allowsEditing: true,
-        quality: 0.7,
+        quality: 0.5,
         base64: true,
       });
 
       if (!result.canceled && result.assets[0]) {
         setProofImage(result.assets[0].uri);
+        if (result.assets[0].base64) {
+          setProofBase64(result.assets[0].base64);
+        }
       }
     } catch (error) {
       Alert.alert("Error", "No se pudo seleccionar la imagen");
@@ -48,12 +53,15 @@ export default function RechargeScreen() {
 
       const result = await ImagePicker.launchCameraAsync({
         allowsEditing: true,
-        quality: 0.7,
+        quality: 0.5,
         base64: true,
       });
 
       if (!result.canceled && result.assets[0]) {
         setProofImage(result.assets[0].uri);
+        if (result.assets[0].base64) {
+          setProofBase64(result.assets[0].base64);
+        }
       }
     } catch (error) {
       Alert.alert("Error", "No se pudo tomar la foto");
@@ -61,6 +69,10 @@ export default function RechargeScreen() {
   };
 
   const showImageOptions = () => {
+    if (Platform.OS === "web") {
+      pickImage();
+      return;
+    }
     Alert.alert(
       "Subir Comprobante",
       "¿Cómo quieres subir el comprobante?",
@@ -95,11 +107,30 @@ export default function RechargeScreen() {
         return;
       }
 
+      let proofUrl = "";
+
+      // Upload image to S3 if we have base64 data
+      if (proofBase64) {
+        try {
+          const uploadResult = await uploadMutation.mutateAsync({
+            userId: user.id,
+            imageBase64: proofBase64,
+            fileName: `proof-${Date.now()}`,
+          });
+          proofUrl = uploadResult.url;
+        } catch (uploadError: any) {
+          Alert.alert("Error", "No se pudo subir la foto: " + (uploadError?.message || "Error desconocido"));
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Create recharge with S3 URL
       await createRechargeMutation.mutateAsync({
         userId: user.id,
         amount: numAmount.toString(),
         reference: reference.trim(),
-        proofUrl: proofImage,
+        proofUrl: proofUrl,
       });
 
       Alert.alert(
@@ -128,7 +159,7 @@ export default function RechargeScreen() {
           <View style={s.content}>
             {/* Bank Info */}
             <View style={s.bankCard}>
-              <Text style={s.bankTitle}>📋 Datos para Depositar</Text>
+              <Text style={s.bankTitle}>Datos para Depositar</Text>
               <View style={s.bankRow}>
                 <Text style={s.bankLabel}>Banco:</Text>
                 <Text style={s.bankValue}>Bancolombia</Text>

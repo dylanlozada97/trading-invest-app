@@ -22,3 +22,4 @@
 - [x] No se puede cargar foto de comprobante en recarga (agregado expo-image-picker)
 - [x] Panel admin se queda en "Cargando datos" (servido desde mismo servidor, sin CORS)
 - [x] Panel admin no muestra datos de usuarios registrados (campos corregidos)
+- [x] Fotos de comprobantes se cargan a S3 correctamente

@@ -3,6 +3,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as dbInv from "./db-investment";
+import { storagePut } from "./storage";
 
 const COOKIE_NAME = "auth";
 
@@ -18,6 +19,25 @@ export const appRouter = router({
   }),
 
   investment: router({
+    // Upload proof image to S3
+    uploadProofImage: publicProcedure
+      .input(z.object({ userId: z.number(), imageBase64: z.string(), fileName: z.string() }))
+      .mutation(async ({ input }) => {
+        try {
+          // Convert base64 to buffer
+          const base64Data = input.imageBase64.split(",").pop() || input.imageBase64;
+          const buffer = Buffer.from(base64Data, "base64");
+          
+          // Upload to S3
+          const fileKey = `recharges/${input.userId}/${input.fileName}-${Date.now()}.jpg`;
+          const { url } = await storagePut(fileKey, buffer, "image/jpeg");
+          
+          return { success: true, url };
+        } catch (error: any) {
+          throw new Error(error.message || "Failed to upload image");
+        }
+      }),
+
     // Users
     createUser: publicProcedure
       .input(z.object({ username: z.string(), email: z.string(), referralCode: z.string(), referredBy: z.string().optional() }))
