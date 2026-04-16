@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Text, View, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
-import { loadUser, AppUser } from "@/lib/auth-store";
+import { loadUser, AppUser, syncUserFromServer } from "@/lib/auth-store";
 import { useRouter } from "expo-router";
 
 export default function HomeScreen() {
@@ -11,7 +11,12 @@ export default function HomeScreen() {
 
   const loadData = useCallback(async () => {
     const u = await loadUser();
-    if (u) setUser(u);
+    if (u) {
+      setUser(u);
+      // Sync with server to get latest balance
+      const updated = await syncUserFromServer(u.id);
+      if (updated) setUser(updated);
+    }
   }, []);
 
   useEffect(() => {

@@ -35,6 +35,25 @@ export async function loadUser(): Promise<AppUser | null> {
   return null;
 }
 
+export async function syncUserFromServer(userId: number): Promise<AppUser | null> {
+  try {
+    const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/trpc/investment.getUser`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ json: { userId } })
+    });
+    const data = await response.json();
+    const user = data.result?.data?.json;
+    if (user) {
+      await saveUser(user);
+      return user;
+    }
+  } catch (error) {
+    console.error('Error syncing user:', error);
+  }
+  return null;
+}
+
 export async function clearUser(): Promise<void> {
   await AsyncStorage.removeItem(STORAGE_KEY);
 }

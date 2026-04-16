@@ -1258,8 +1258,8 @@
                         <td>${r.bankReference || '-'}</td>
                         <td>${createdDate.toLocaleDateString('es-ES')}</td>
                         <td>${statusBadge}</td>
-                        <td>${r.proofImageUrl ? '<button class="btn btn-view" onclick="viewImage(\'' + r.proofImageUrl + '\')">Ver</button>' : '-'}</td>
-                        <td>${r.status === 'pending' ? `<button class="btn btn-approve" onclick="openRechargeModal('${r.id}')">Revisar</button>` : '-'}</td>
+                        <td>${r.proofImageUrl ? '<button class="btn btn-view" onclick="viewImage(\'' + r.proofImageUrl + '\')" style="cursor: pointer;">Ver</button>' : '-'}</td>
+                        <td>${r.status === 'pending' ? `<button class="btn btn-approve" onclick="openRechargeModal(${r.id})" style="cursor: pointer;">Revisar</button>` : '-'}</td>
                     </tr>
                 `;
             }).join('');
