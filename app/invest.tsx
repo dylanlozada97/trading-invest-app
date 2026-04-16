@@ -3,7 +3,7 @@ import { Text, View, TextInput, ScrollView, Alert, StyleSheet, ActivityIndicator
 import { ScreenContainer } from "@/components/screen-container";
 import { useRouter } from "expo-router";
 import { trpc } from "@/lib/trpc";
-import { loadUser, saveUser, AppUser } from "@/lib/auth-store";
+import { loadUser, saveUser, AppUser, syncUserFromServer } from "@/lib/auth-store";
 
 export default function InvestScreen() {
   const router = useRouter();
@@ -13,7 +13,12 @@ export default function InvestScreen() {
 
   const loadData = useCallback(async () => {
     const u = await loadUser();
-    if (u) setUser(u);
+    if (u) {
+      setUser(u);
+      // Sync with server to get real ID and latest balance
+      const synced = await syncUserFromServer(u.id, u.username);
+      if (synced) setUser(synced);
+    }
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);

@@ -13,8 +13,8 @@ export default function HomeScreen() {
     const u = await loadUser();
     if (u) {
       setUser(u);
-      // Sync with server to get latest balance
-      const updated = await syncUserFromServer(u.id);
+      // Sync with server to get latest balance (pass username as fallback for userId=0)
+      const updated = await syncUserFromServer(u.id, u.username);
       if (updated) setUser(updated);
     }
   }, []);

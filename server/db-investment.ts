@@ -47,6 +47,14 @@ export async function getAppUser(userId: number) {
   return result.length > 0 ? result[0] : null;
 }
 
+export async function getAppUserByUsername(username: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.select().from(schema.appUsers).where(eq(schema.appUsers.username, username)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
 export async function getAllAppUsers() {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

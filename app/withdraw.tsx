@@ -3,7 +3,7 @@ import { Text, View, TextInput, ScrollView, Alert, StyleSheet, ActivityIndicator
 import { ScreenContainer } from "@/components/screen-container";
 import { useRouter } from "expo-router";
 import { trpc } from "@/lib/trpc";
-import { loadUser } from "@/lib/auth-store";
+import { loadUser, syncUserFromServer } from "@/lib/auth-store";
 
 
 export default function WithdrawScreen() {
@@ -29,10 +29,22 @@ export default function WithdrawScreen() {
 
     setLoading(true);
     try {
-      const user = await loadUser();
+      let user = await loadUser();
       if (!user) {
         Alert.alert("Error", "Sesión expirada");
         return;
+      }
+
+      // Ensure we have the real userId from the server
+      if (user.id === 0 || !user.id) {
+        const synced = await syncUserFromServer(user.id, user.username);
+        if (synced && synced.id > 0) {
+          user = synced;
+        } else {
+          Alert.alert("Error", "No se pudo verificar tu cuenta. Cierra sesión e inicia de nuevo.");
+          setLoading(false);
+          return;
+        }
       }
 
       if (numAmount > parseFloat(user.balance)) {

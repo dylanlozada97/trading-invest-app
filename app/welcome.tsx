@@ -74,6 +74,8 @@ export default function WelcomeScreen() {
     }
   };
 
+  const getUserByUsernameMutation = trpc.investment.getUserByUsername.useMutation();
+
   const handleLogin = async () => {
     if (!loginUser.trim() || !loginPass.trim()) {
       Alert.alert("Error", "Todos los campos son obligatorios");
@@ -89,16 +91,36 @@ export default function WelcomeScreen() {
         return;
       }
 
-      const savedUser = await AsyncStorage.getItem("auth_user");
-      if (savedUser) {
-        const user = JSON.parse(savedUser);
-        if (user.username === loginUser.trim()) {
+      // Always fetch user from server to get the real ID and latest balance
+      try {
+        const serverUser = await getUserByUsernameMutation.mutateAsync({ username: loginUser.trim() });
+        if (serverUser) {
+          const user = {
+            id: serverUser.id,
+            username: serverUser.username,
+            email: serverUser.email,
+            balance: serverUser.balance,
+            totalReferrals: serverUser.totalReferrals,
+            referralCode: serverUser.referralCode,
+            referredBy: serverUser.referredBy || null,
+          };
+          await saveUser(user);
           router.replace("/(tabs)");
           return;
         }
+      } catch (e) {
+        // Fallback to local data if server is unavailable
+        const savedUser = await AsyncStorage.getItem("auth_user");
+        if (savedUser) {
+          const user = JSON.parse(savedUser);
+          if (user.username === loginUser.trim()) {
+            router.replace("/(tabs)");
+            return;
+          }
+        }
       }
 
-      Alert.alert("Error", "Usuario no encontrado en este dispositivo");
+      Alert.alert("Error", "Usuario no encontrado");
     } catch (error: any) {
       Alert.alert("Error", "Error al iniciar sesión");
     } finally {

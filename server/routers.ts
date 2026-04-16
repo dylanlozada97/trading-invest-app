@@ -47,6 +47,10 @@ export const appRouter = router({
       .input(z.object({ userId: z.number() }))
       .query(async ({ input }) => dbInv.getAppUser(input.userId)),
 
+    getUserByUsername: publicProcedure
+      .input(z.object({ username: z.string() }))
+      .mutation(async ({ input }) => dbInv.getAppUserByUsername(input.username)),
+
     // Investments
     createInvestment: publicProcedure
       .input(z.object({ userId: z.number(), amount: z.string() }))

@@ -28,3 +28,9 @@
 - [x] Modificar niveles de referidos de 5 en 5 (Bronce 0, Bronze 5, Silver 10, Gold 15, Platinum 20, Diamond 25+)
 - [x] Actualizar comisiones según nuevos niveles (5%, 10%, 15%, 20%, 25%, 30%)
 - [x] Actualizar panel admin para mostrar nuevos niveles
+
+## Bugs Reportados (Abril 16)
+- [x] BUG: Al aprobar recarga en panel admin, el saldo no se acredita en la cuenta del usuario
+- [x] Verificar que approveRecharge actualice correctamente el balance en la BD
+- [x] Verificar que la app móvil sincronice el saldo desde el servidor
+- [x] Verificar que el userId se esté pasando correctamente en las recargas

@@ -35,22 +35,48 @@ export async function loadUser(): Promise<AppUser | null> {
   return null;
 }
 
-export async function syncUserFromServer(userId: number): Promise<AppUser | null> {
-  try {
-    const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/trpc/investment.getUser`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ json: { userId } })
-    });
-    const data = await response.json();
-    const user = data.result?.data?.json;
-    if (user) {
-      await saveUser(user);
-      return user;
+/**
+ * Sync user data from the server. If userId is 0 or invalid, falls back to
+ * searching by username so users who registered before the ID fix still work.
+ */
+export async function syncUserFromServer(userId: number, username?: string): Promise<AppUser | null> {
+  const apiBase = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+
+  // If userId is valid (> 0), try fetching by ID first (getUser is a GET query)
+  if (userId > 0) {
+    try {
+      const input = encodeURIComponent(JSON.stringify({ json: { userId } }));
+      const response = await fetch(`${apiBase}/api/trpc/investment.getUser?input=${input}`);
+      const data = await response.json();
+      const user = data.result?.data?.json;
+      if (user && user.id > 0) {
+        await saveUser(user);
+        return user;
+      }
+    } catch (error) {
+      console.error('Error syncing user by ID:', error);
     }
-  } catch (error) {
-    console.error('Error syncing user:', error);
   }
+
+  // Fallback: search by username (getUserByUsername is a POST mutation)
+  if (username) {
+    try {
+      const response = await fetch(`${apiBase}/api/trpc/investment.getUserByUsername`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ json: { username } })
+      });
+      const data = await response.json();
+      const user = data.result?.data?.json;
+      if (user && user.id > 0) {
+        await saveUser(user);
+        return user;
+      }
+    } catch (error) {
+      console.error('Error syncing user by username:', error);
+    }
+  }
+
   return null;
 }
 
