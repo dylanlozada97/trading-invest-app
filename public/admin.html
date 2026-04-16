@@ -1425,10 +1425,19 @@
             document.getElementById('rechargeReference').value = recharge.bankReference || '-';
             document.getElementById('rechargeNotes').value = '';
 
-            if (recharge.proofImageUrl) {
-                const img = document.getElementById('rechargeImage');
-                img.src = recharge.proofImageUrl;
+            const img = document.getElementById('rechargeImage');
+            console.log('Recharge data:', recharge);
+            console.log('Proof URL:', recharge.proofImageUrl || recharge.proofUrl);
+            
+            if (recharge.proofImageUrl || recharge.proofUrl) {
+                img.src = recharge.proofImageUrl || recharge.proofUrl;
                 img.style.display = 'block';
+                img.onerror = function() {
+                    console.error('Error loading image:', this.src);
+                    img.style.display = 'none';
+                };
+            } else {
+                img.style.display = 'none';
             }
 
             document.getElementById('rechargeModal').classList.add('active');

@@ -188,10 +188,12 @@ export async function approveRecharge(rechargeId: number) {
     // Update recharge
     await db.update(schema.recharges).set({ status: "approved" }).where(eq(schema.recharges.id, rechargeId));
 
-    // Add to user balance
+    // Add to user balance (only if user exists)
     const user = await db.select().from(schema.appUsers).where(eq(schema.appUsers.id, recharge[0].userId)).limit(1);
-    const newBalance = (parseFloat(user[0].balance) + parseFloat(recharge[0].amount)).toString();
-    await db.update(schema.appUsers).set({ balance: newBalance }).where(eq(schema.appUsers.id, recharge[0].userId));
+    if (user.length > 0) {
+      const newBalance = (parseFloat(user[0].balance) + parseFloat(recharge[0].amount)).toString();
+      await db.update(schema.appUsers).set({ balance: newBalance }).where(eq(schema.appUsers.id, recharge[0].userId));
+    }
 
     // Record transaction
     await db.insert(schema.transactions).values({
@@ -213,7 +215,20 @@ export async function rejectRecharge(rechargeId: number) {
   if (!db) throw new Error("Database not available");
 
   try {
+    const recharge = await db.select().from(schema.recharges).where(eq(schema.recharges.id, rechargeId)).limit(1);
+    if (recharge.length === 0) throw new Error("Recarga no encontrada");
+    
     await db.update(schema.recharges).set({ status: "rejected" }).where(eq(schema.recharges.id, rechargeId));
+    
+    // Record transaction
+    await db.insert(schema.transactions).values({
+      userId: recharge[0].userId,
+      type: "recharge",
+      amount: recharge[0].amount,
+      description: `Recarga rechazada: $${recharge[0].amount}`,
+      createdAt: new Date(),
+    });
+    
     return { success: true };
   } catch (error: any) {
     throw new Error(error.message);
