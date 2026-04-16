@@ -29,7 +29,11 @@ export async function createAppUser(data: { username: string; email: string; ref
       createdAt: new Date(),
     });
 
-    return { success: true, userId: (result as any).insertId || 0 };
+    // Get the inserted user to retrieve the actual ID
+    const users = await db.select().from(schema.appUsers).where(eq(schema.appUsers.username, data.username)).limit(1);
+    const userId = users.length > 0 ? users[0].id : 0;
+
+    return { success: true, userId };
   } catch (error: any) {
     throw new Error(error.message);
   }
