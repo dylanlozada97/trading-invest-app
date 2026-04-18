@@ -49,3 +49,4 @@
 
 ## Bugs Reportados (Abril 18 - Ronda 2)
 - [x] BUG: El cierre de sesión no funciona correctamente
+- [x] BUG: El cierre de sesión no funciona en navegadores web (localStorage no se limpia)

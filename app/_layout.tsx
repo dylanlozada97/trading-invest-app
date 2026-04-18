@@ -18,7 +18,7 @@ import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 
 import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
-import { loadUser } from "@/lib/auth-store";
+import { loadUser, subscribeToAuthChanges, AppUser } from "@/lib/auth-store";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -30,25 +30,37 @@ export const unstable_settings = {
 function AuthRedirect() {
   const router = useRouter();
   const segments = useSegments();
-  const [initialCheckDone, setInitialCheckDone] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AppUser | null | undefined>(undefined);
 
+  // Initial load
   useEffect(() => {
-    // Only run the initial check once on mount
-    if (initialCheckDone) return;
+    loadUser().then(u => setCurrentUser(u));
+  }, []);
 
-    const check = async () => {
-      const user = await loadUser();
-      const inWelcome = segments[0] === "welcome";
+  // Subscribe to auth changes (login/logout)
+  useEffect(() => {
+    const unsubscribe = subscribeToAuthChanges((user) => {
+      setCurrentUser(user);
+    });
+    return unsubscribe;
+  }, []);
 
-      if (!user && !inWelcome) {
-        router.replace("/welcome");
-      } else if (user && inWelcome) {
-        router.replace("/(tabs)");
-      }
-      setInitialCheckDone(true);
-    };
-    check();
-  }, [segments, initialCheckDone]);
+  // React to auth state changes
+  useEffect(() => {
+    // Still loading initial state
+    if (currentUser === undefined) return;
+
+    const inWelcome = segments[0] === "welcome";
+    const inTabs = segments[0] === "(tabs)";
+
+    if (currentUser === null && !inWelcome) {
+      // User logged out or not authenticated - go to welcome
+      router.replace("/welcome");
+    } else if (currentUser !== null && inWelcome) {
+      // User is authenticated but on welcome - go to app
+      router.replace("/(tabs)");
+    }
+  }, [currentUser, segments]);
 
   return null;
 }

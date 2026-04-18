@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getApiBaseUrl } from "@/constants/oauth";
+import { Platform } from "react-native";
 
 export interface AppUser {
   id: number;
@@ -19,11 +20,36 @@ export interface AuthState {
 
 const STORAGE_KEY = "auth_user";
 
+// Global auth state listeners - allows components to react to logout
+type AuthListener = (user: AppUser | null) => void;
+const listeners: Set<AuthListener> = new Set();
+
+export function subscribeToAuthChanges(listener: AuthListener): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function notifyListeners(user: AppUser | null) {
+  listeners.forEach(l => l(user));
+}
+
 export async function saveUser(user: AppUser): Promise<void> {
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  // Also set in web localStorage directly for reliability
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user)); } catch {}
+  }
+  notifyListeners(user);
 }
 
 export async function loadUser(): Promise<AppUser | null> {
+  // On web, try localStorage first for reliability
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    try {
+      const webData = window.localStorage.getItem(STORAGE_KEY);
+      if (webData) return JSON.parse(webData);
+    } catch {}
+  }
   const data = await AsyncStorage.getItem(STORAGE_KEY);
   if (data) {
     try {
@@ -40,10 +66,8 @@ export async function loadUser(): Promise<AppUser | null> {
  * If userId is 0 or invalid, falls back to searching by username.
  */
 export async function syncUserFromServer(userId: number, username?: string): Promise<AppUser | null> {
-  // Use the same URL helper as the rest of the app
   const apiBase = getApiBaseUrl() || 'http://localhost:3000';
 
-  // If userId is valid (> 0), try fetching by ID first (getUser is a GET query)
   if (userId > 0) {
     try {
       const input = encodeURIComponent(JSON.stringify({ json: { userId } }));
@@ -70,7 +94,6 @@ export async function syncUserFromServer(userId: number, username?: string): Pro
     }
   }
 
-  // Fallback: search by username (getUserByUsername is a POST mutation)
   if (username) {
     try {
       const response = await fetch(`${apiBase}/api/trpc/investment.getUserByUsername`, {
@@ -104,7 +127,15 @@ export async function syncUserFromServer(userId: number, username?: string): Pro
 }
 
 export async function clearUser(): Promise<void> {
+  // Remove from AsyncStorage
   await AsyncStorage.removeItem(STORAGE_KEY);
+  // Also remove from web localStorage directly
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    try { window.localStorage.removeItem(STORAGE_KEY); } catch {}
+    try { window.sessionStorage.clear(); } catch {}
+  }
+  // Notify all listeners that user is logged out
+  notifyListeners(null);
 }
 
 export function generateReferralCode(): string {
