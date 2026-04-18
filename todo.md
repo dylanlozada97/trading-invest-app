@@ -46,3 +46,6 @@
 - [x] Al enviar recarga, redirigir automáticamente al menú sin mostrar botón (evitar reenvíos)
 - [x] Evitar envíos duplicados de recarga (deshabilitar botón tras enviar)
 - [x] Mostrar historial de recargas del usuario en la app
+
+## Bugs Reportados (Abril 18 - Ronda 2)
+- [x] BUG: El cierre de sesión no funciona correctamente

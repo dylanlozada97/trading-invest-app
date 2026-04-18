@@ -4,6 +4,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { loadUser, clearUser, AppUser, getReferralLevel, syncUserFromServer } from "@/lib/auth-store";
 import { useRouter } from "expo-router";
 import { trpc } from "@/lib/trpc";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -27,6 +28,8 @@ export default function ProfileScreen() {
     { enabled: !!user?.id && user.id > 0 }
   );
 
+  const queryClient = useQueryClient();
+
   const handleLogout = () => {
     Alert.alert(
       "Cerrar Sesión",
@@ -37,7 +40,11 @@ export default function ProfileScreen() {
           text: "Cerrar Sesión",
           style: "destructive",
           onPress: async () => {
+            // Clear user from AsyncStorage
             await clearUser();
+            // Clear all React Query cache to avoid stale data on next login
+            queryClient.clear();
+            // Navigate to welcome screen
             router.replace("/welcome");
           },
         },

@@ -30,9 +30,12 @@ export const unstable_settings = {
 function AuthRedirect() {
   const router = useRouter();
   const segments = useSegments();
-  const [checked, setChecked] = useState(false);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   useEffect(() => {
+    // Only run the initial check once on mount
+    if (initialCheckDone) return;
+
     const check = async () => {
       const user = await loadUser();
       const inWelcome = segments[0] === "welcome";
@@ -42,10 +45,10 @@ function AuthRedirect() {
       } else if (user && inWelcome) {
         router.replace("/(tabs)");
       }
-      setChecked(true);
+      setInitialCheckDone(true);
     };
     check();
-  }, [segments]);
+  }, [segments, initialCheckDone]);
 
   return null;
 }
