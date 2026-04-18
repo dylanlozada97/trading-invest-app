@@ -40,3 +40,9 @@
 - [x] Después de que el admin apruebe, el usuario debe ver el saldo recargado en la app
 - [x] Al enviar foto de recarga, debe aparecer para aprobar o rechazar en el panel admin
 - [x] Borrar todas las recargas, saldos y transacciones para empezar de cero (prueba limpia)
+
+## Bugs Reportados (Abril 18)
+- [x] BUG: Error al intentar invertir desde la app
+- [x] Al enviar recarga, redirigir automáticamente al menú sin mostrar botón (evitar reenvíos)
+- [x] Evitar envíos duplicados de recarga (deshabilitar botón tras enviar)
+- [x] Mostrar historial de recargas del usuario en la app

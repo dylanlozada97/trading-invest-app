@@ -75,6 +75,22 @@ export async function createInvestment(userId: number, amount: string) {
   if (!db) throw new Error("Database not available");
 
   try {
+    // Check user exists and has enough balance
+    const users = await db.select().from(schema.appUsers).where(eq(schema.appUsers.id, userId)).limit(1);
+    if (users.length === 0) throw new Error("Usuario no encontrado");
+
+    const currentBalance = parseFloat(users[0].balance);
+    const investAmount = parseFloat(amount);
+
+    if (currentBalance < investAmount) {
+      throw new Error(`Saldo insuficiente. Tu saldo es $${currentBalance.toLocaleString('es-CO')}`);
+    }
+
+    // Deduct balance from user in DB
+    const newBalance = (currentBalance - investAmount).toString();
+    await db.update(schema.appUsers).set({ balance: newBalance }).where(eq(schema.appUsers.id, userId));
+
+    // Create investment record
     const result = await db.insert(schema.investments).values({
       userId,
       amount,
@@ -91,7 +107,7 @@ export async function createInvestment(userId: number, amount: string) {
       createdAt: new Date(),
     });
 
-    return { success: true, investmentId: (result as any).insertId || 0 };
+    return { success: true, investmentId: (result as any).insertId || 0, newBalance };
   } catch (error: any) {
     throw new Error(error.message);
   }
@@ -153,12 +169,19 @@ export async function createRecharge(userId: number, data: { amount: string; ref
   if (!db) throw new Error("Database not available");
 
   try {
-    const result = await db.insert(schema.recharges).values({
+    await db.insert(schema.recharges).values({
       userId,
       ...data,
       status: "pending",
       createdAt: new Date(),
     });
+
+    // Get the inserted recharge ID by querying the latest one for this user
+    const inserted = await db.select().from(schema.recharges)
+      .where(and(eq(schema.recharges.userId, userId), eq(schema.recharges.reference, data.reference)))
+      .orderBy(schema.recharges.id)
+      .limit(1);
+    const rechargeId = inserted.length > 0 ? inserted[inserted.length - 1].id : 0;
 
     // Record transaction
     await db.insert(schema.transactions).values({
@@ -169,7 +192,7 @@ export async function createRecharge(userId: number, data: { amount: string; ref
       createdAt: new Date(),
     });
 
-    return { success: true, rechargeId: (result as any).insertId || 0 };
+    return { success: true, rechargeId };
   } catch (error: any) {
     throw new Error(error.message);
   }

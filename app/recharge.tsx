@@ -11,6 +11,7 @@ export default function RechargeScreen() {
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false); // Prevent duplicate submissions
   const [proofImage, setProofImage] = useState<string | null>(null);
   const [proofBase64, setProofBase64] = useState<string | null>(null);
 
@@ -69,6 +70,7 @@ export default function RechargeScreen() {
   };
 
   const showImageOptions = () => {
+    if (submitted) return; // Don't allow changing image after submission
     if (Platform.OS === "web") {
       pickImage();
       return;
@@ -85,6 +87,9 @@ export default function RechargeScreen() {
   };
 
   const handleRecharge = async () => {
+    // Prevent duplicate submissions
+    if (submitted || loading) return;
+
     const numAmount = parseFloat(amount);
     if (!numAmount || numAmount <= 0) {
       Alert.alert("Error", "Ingresa un monto válido");
@@ -101,7 +106,7 @@ export default function RechargeScreen() {
 
     setLoading(true);
     try {
-      // Always sync user from server first to get the real ID and latest balance
+      // Always sync user from server first to get the real ID
       let user = await loadUser();
       if (!user) {
         Alert.alert("Error", "Sesión expirada. Por favor inicia sesión de nuevo.");
@@ -131,7 +136,7 @@ export default function RechargeScreen() {
           });
           proofUrl = uploadResult.url;
         } catch (uploadError: any) {
-          Alert.alert("Error al subir foto", "No se pudo subir el comprobante. Verifica tu conexión e inténtalo de nuevo.\n\nDetalle: " + (uploadError?.message || "Error desconocido"));
+          Alert.alert("Error al subir foto", "No se pudo subir el comprobante. Verifica tu conexión e inténtalo de nuevo.");
           setLoading(false);
           return;
         }
@@ -145,19 +150,42 @@ export default function RechargeScreen() {
         proofUrl: proofUrl,
       });
 
-      // Success! Show confirmation message
-      Alert.alert(
-        "¡Recarga Enviada! ✅",
-        `Tu recarga de $${numAmount.toLocaleString()} ha sido enviada para aprobación.\n\nEl administrador revisará tu comprobante y aprobará tu recarga pronto.\n\nUna vez aprobada, el saldo se reflejará automáticamente en tu cuenta.`,
-        [{ text: "Entendido 👍", onPress: () => router.back() }]
-      );
+      // Mark as submitted to prevent duplicates
+      setSubmitted(true);
+      setLoading(false);
+
+      // Show success screen (replaces the form)
     } catch (error: any) {
       const msg = error?.message || "Error al enviar recarga";
       Alert.alert("Error", msg + "\n\nPor favor verifica tu conexión e inténtalo de nuevo.");
-    } finally {
       setLoading(false);
     }
   };
+
+  // ✅ Success screen: shown after successful submission, auto-redirects to menu
+  if (submitted) {
+    return (
+      <ScreenContainer edges={["top", "bottom", "left", "right"]}>
+        <View style={s.successContainer}>
+          <Text style={s.successEmoji}>✅</Text>
+          <Text style={s.successTitle}>¡Recarga Enviada!</Text>
+          <Text style={s.successMsg}>
+            Tu recarga de <Text style={s.successAmount}>${parseFloat(amount).toLocaleString()}</Text> ha sido enviada para aprobación.
+          </Text>
+          <Text style={s.successSub}>
+            El administrador revisará tu comprobante y aprobará tu recarga pronto. Una vez aprobada, el saldo aparecerá en tu cuenta.
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.replace("/(tabs)" as any)}
+            style={s.successBtn}
+            activeOpacity={0.7}
+          >
+            <Text style={s.successBtnText}>Volver al Menú Principal</Text>
+          </TouchableOpacity>
+        </View>
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
@@ -237,7 +265,12 @@ export default function RechargeScreen() {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={handleRecharge} disabled={loading} style={[s.submitBtn, loading && s.submitBtnDisabled]} activeOpacity={0.7}>
+            <TouchableOpacity
+              onPress={handleRecharge}
+              disabled={loading || submitted}
+              style={[s.submitBtn, (loading || submitted) && s.submitBtnDisabled]}
+              activeOpacity={0.7}
+            >
               {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.submitBtnText}>Enviar Recarga</Text>}
             </TouchableOpacity>
 
@@ -279,4 +312,13 @@ const s = StyleSheet.create({
   submitBtnDisabled: { opacity: 0.6 },
   submitBtnText: { color: "#fff", fontSize: 17, fontWeight: "bold" },
   note: { textAlign: "center", color: "#9BA1A6", fontSize: 13, marginTop: 16 },
+  // Success screen styles
+  successContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 30, backgroundColor: "#1a1a2e" },
+  successEmoji: { fontSize: 72, marginBottom: 16 },
+  successTitle: { fontSize: 28, fontWeight: "bold", color: "#fff", marginBottom: 16, textAlign: "center" },
+  successMsg: { fontSize: 16, color: "#ECEDEE", textAlign: "center", marginBottom: 12, lineHeight: 24 },
+  successAmount: { color: "#fbbf24", fontWeight: "bold" },
+  successSub: { fontSize: 14, color: "#9BA1A6", textAlign: "center", marginBottom: 32, lineHeight: 22 },
+  successBtn: { backgroundColor: "#22C55E", paddingVertical: 16, paddingHorizontal: 32, borderRadius: 12, width: "100%", alignItems: "center" },
+  successBtnText: { color: "#fff", fontSize: 17, fontWeight: "bold" },
 });

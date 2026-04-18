@@ -15,7 +15,7 @@ export default function InvestScreen() {
     const u = await loadUser();
     if (u) {
       setUser(u);
-      // Sync with server to get real ID and latest balance
+      // Always sync with server to get real ID and latest balance
       const synced = await syncUserFromServer(u.id, u.username);
       if (synced) setUser(synced);
     }
@@ -35,13 +35,13 @@ export default function InvestScreen() {
 
     const balance = parseFloat(user.balance);
     if (balance < numAmount) {
-      Alert.alert("Saldo Insuficiente", `Tu saldo es $${balance.toLocaleString()}. Recarga primero.`);
+      Alert.alert("Saldo Insuficiente", `Tu saldo disponible es $${balance.toLocaleString()}.\n\nRecarga tu saldo primero para poder invertir.`);
       return;
     }
 
     Alert.alert(
       "Confirmar Inversión",
-      `Monto: $${numAmount.toLocaleString()}\nGanancia: $${(numAmount * 0.6).toLocaleString()}\nTotal a recibir: $${(numAmount * 1.6).toLocaleString()}\n\nPlazo: 15 días`,
+      `Monto a invertir: $${numAmount.toLocaleString()}\nGanancia (60%): +$${(numAmount * 0.6).toLocaleString()}\nTotal a recibir: $${(numAmount * 1.6).toLocaleString()}\n\nPlazo: 15 días`,
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -49,23 +49,26 @@ export default function InvestScreen() {
           onPress: async () => {
             setLoading(true);
             try {
-              await createInvestmentMutation.mutateAsync({
+              // createInvestment now deducts balance in DB and returns newBalance
+              const result = await createInvestmentMutation.mutateAsync({
                 userId: user.id,
                 amount: numAmount.toString(),
               });
 
-              const newBalance = (balance - numAmount).toString();
+              // Update local user with the balance returned by the server
+              const newBalance = (result as any).newBalance ?? (balance - numAmount).toString();
               const updatedUser = { ...user, balance: newBalance };
               await saveUser(updatedUser);
               setUser(updatedUser);
 
               Alert.alert(
-                "Inversión Exitosa",
-                `Has invertido $${numAmount.toLocaleString()}.\nRecibirás $${(numAmount * 1.6).toLocaleString()} en 15 días.`,
+                "¡Inversión Exitosa! 🎉",
+                `Has invertido $${numAmount.toLocaleString()}.\n\nRecibirás $${(numAmount * 1.6).toLocaleString()} en 15 días.\n\nTu nuevo saldo: $${parseFloat(newBalance).toLocaleString()}`,
                 [{ text: "OK", onPress: () => router.back() }]
               );
             } catch (error: any) {
-              Alert.alert("Error", error?.message || "Error al invertir");
+              const msg = error?.message || "Error al invertir";
+              Alert.alert("Error", msg);
             } finally {
               setLoading(false);
             }
@@ -83,7 +86,7 @@ export default function InvestScreen() {
             <Text style={s.backText}>← Volver</Text>
           </TouchableOpacity>
           <Text style={s.headerTitle}>Invertir</Text>
-          <Text style={s.headerSub}>Saldo: ${user ? parseFloat(user.balance).toLocaleString() : "0"}</Text>
+          <Text style={s.headerSub}>Saldo disponible: ${user ? parseFloat(user.balance).toLocaleString() : "0"}</Text>
         </View>
 
         <View style={s.content}>
