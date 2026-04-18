@@ -402,3 +402,28 @@ export async function getAdminStats() {
     };
   }
 }
+
+// RESET ALL DATA (for testing - clears recharges, transactions, investments, withdrawals, commissions and resets balances)
+export async function resetAllData() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    // Delete all transactions
+    await db.delete(schema.transactions);
+    // Delete all recharges
+    await db.delete(schema.recharges);
+    // Delete all investments
+    await db.delete(schema.investments);
+    // Delete all withdrawals
+    await db.delete(schema.withdrawals);
+    // Delete all commissions
+    await db.delete(schema.commissions);
+    // Reset all user balances to 0
+    await db.update(schema.appUsers).set({ balance: "0", totalReferrals: 0 });
+
+    return { success: true, message: "Todos los datos han sido borrados. Saldos reseteados a 0." };
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}

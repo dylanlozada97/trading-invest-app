@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
-import { Text, View, ScrollView, Alert, StyleSheet } from "react-native";
+import { Text, View, ScrollView, Alert, StyleSheet, RefreshControl } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
-import { loadUser, clearUser, AppUser, getReferralLevel } from "@/lib/auth-store";
+import { loadUser, clearUser, AppUser, getReferralLevel, syncUserFromServer } from "@/lib/auth-store";
 import { useRouter } from "expo-router";
 import { Pressable } from "react-native";
 
@@ -9,9 +9,16 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [user, setUser] = useState<AppUser | null>(null);
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const loadData = useCallback(async () => {
     const u = await loadUser();
-    if (u) setUser(u);
+    if (u) {
+      setUser(u);
+      // Sync with server to get latest balance
+      const synced = await syncUserFromServer(u.id, u.username);
+      if (synced) setUser(synced);
+    }
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -40,7 +47,7 @@ export default function ProfileScreen() {
 
   return (
     <ScreenContainer>
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await loadData(); setRefreshing(false); }} tintColor="#fff" />}>
         <View style={s.header}>
           <View style={s.avatar}>
             <Text style={s.avatarText}>{user.username.charAt(0).toUpperCase()}</Text>

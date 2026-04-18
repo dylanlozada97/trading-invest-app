@@ -34,3 +34,9 @@
 - [x] Verificar que approveRecharge actualice correctamente el balance en la BD
 - [x] Verificar que la app móvil sincronice el saldo desde el servidor
 - [x] Verificar que el userId se esté pasando correctamente en las recargas
+
+## Bugs Reportados (Abril 16 - Ronda 2)
+- [x] Al recargar, al usuario le debe salir "Tu recarga ha sido enviada para aprobación"
+- [x] Después de que el admin apruebe, el usuario debe ver el saldo recargado en la app
+- [x] Al enviar foto de recarga, debe aparecer para aprobar o rechazar en el panel admin
+- [x] Borrar todas las recargas, saldos y transacciones para empezar de cero (prueba limpia)

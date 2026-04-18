@@ -882,6 +882,12 @@
                     </div>
 
                     <button class="btn btn-approve" onclick="saveSettings()" style="width: 100%; margin-top: 20px;">💾 Guardar Configuración</button>
+
+                    <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #334155;">
+                        <h3 style="color: #EF4444; margin-bottom: 12px;">⚠️ Zona de Peligro</h3>
+                        <p style="color: #9BA1A6; margin-bottom: 16px; font-size: 14px;">Esta acción borrará todas las recargas, retiros, inversiones, comisiones, transacciones y reseteará todos los saldos a $0. No se puede deshacer.</p>
+                        <button class="btn" onclick="resetAllData()" style="width: 100%; background: #EF4444; color: white; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer;">🗑️ Borrar Todos los Datos y Resetear Saldos</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1543,6 +1549,18 @@
 
             localStorage.setItem('adminSettings', JSON.stringify(settings));
             showAlert('Configuración guardada correctamente', 'success');
+        }
+
+        async function resetAllData() {
+            if (!confirm('¿Estás seguro que quieres BORRAR TODOS LOS DATOS?\n\nEsto eliminará:\n- Todas las recargas\n- Todos los retiros\n- Todas las inversiones\n- Todas las comisiones\n- Todas las transacciones\n- Todos los saldos se resetearán a $0\n\nEsta acción NO se puede deshacer.')) return;
+            if (!confirm('¿REALMENTE estás seguro? Esta acción es IRREVERSIBLE.')) return;
+            try {
+                await trpcPost('admin.resetAllData', {});
+                showAlert('Todos los datos han sido borrados y los saldos reseteados a $0', 'success');
+                loadAllData();
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
         }
 
         // UI Functions

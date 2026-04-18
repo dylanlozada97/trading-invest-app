@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Text, View, ScrollView, Alert, StyleSheet, Share, RefreshControl } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
-import { loadUser, AppUser, getReferralLevel } from "@/lib/auth-store";
+import { loadUser, AppUser, getReferralLevel, syncUserFromServer } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
 import { Pressable } from "react-native";
 import * as Clipboard from "expo-clipboard" ;
@@ -13,7 +13,11 @@ export default function ReferralsScreen() {
 
   const loadData = useCallback(async () => {
     const u = await loadUser();
-    if (u) setUser(u);
+    if (u) {
+      setUser(u);
+      const synced = await syncUserFromServer(u.id, u.username);
+      if (synced) setUser(synced);
+    }
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Text, View, ScrollView, Alert, StyleSheet, FlatList, RefreshControl } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
-import { loadUser, saveUser, AppUser } from "@/lib/auth-store";
+import { loadUser, saveUser, AppUser, syncUserFromServer } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
 import { Pressable } from "react-native";
 
@@ -12,7 +12,12 @@ export default function InvestmentsScreen() {
 
   const loadData = useCallback(async () => {
     const u = await loadUser();
-    if (u) setUser(u);
+    if (u) {
+      setUser(u);
+      // Sync with server to get latest balance and real ID
+      const synced = await syncUserFromServer(u.id, u.username);
+      if (synced) setUser(synced);
+    }
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);

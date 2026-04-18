@@ -146,9 +146,9 @@ export default function RechargeScreen() {
       });
 
       Alert.alert(
-        "Recarga Enviada",
-        "Tu recarga está pendiente de aprobación. El administrador la revisará pronto.",
-        [{ text: "OK", onPress: () => router.back() }]
+        "¡Recarga Enviada!",
+        `Tu recarga de $${numAmount.toLocaleString()} ha sido enviada para aprobación.\n\nEl administrador revisará tu comprobante y aprobará tu recarga pronto. Una vez aprobada, el saldo se reflejará en tu cuenta.`,
+        [{ text: "Entendido", onPress: () => router.back() }]
       );
     } catch (error: any) {
       Alert.alert("Error", error?.message || "Error al enviar recarga");
