@@ -101,22 +101,22 @@ export default function RechargeScreen() {
 
     setLoading(true);
     try {
+      // Always sync user from server first to get the real ID and latest balance
       let user = await loadUser();
       if (!user) {
-        Alert.alert("Error", "Sesión expirada");
+        Alert.alert("Error", "Sesión expirada. Por favor inicia sesión de nuevo.");
+        setLoading(false);
         return;
       }
 
-      // Ensure we have the real userId from the server (fixes userId=0 bug)
-      if (user.id === 0 || !user.id) {
-        const synced = await syncUserFromServer(user.id, user.username);
-        if (synced && synced.id > 0) {
-          user = synced;
-        } else {
-          Alert.alert("Error", "No se pudo verificar tu cuenta. Cierra sesión e inicia de nuevo.");
-          setLoading(false);
-          return;
-        }
+      // Always sync to get the real userId (fixes userId=0 bug for old accounts)
+      const synced = await syncUserFromServer(user.id, user.username);
+      if (synced && synced.id > 0) {
+        user = synced;
+      } else if (!user.id || user.id === 0) {
+        Alert.alert("Error", "No se pudo verificar tu cuenta. Por favor cierra sesión e inicia de nuevo.");
+        setLoading(false);
+        return;
       }
 
       let proofUrl = "";
@@ -131,7 +131,7 @@ export default function RechargeScreen() {
           });
           proofUrl = uploadResult.url;
         } catch (uploadError: any) {
-          Alert.alert("Error", "No se pudo subir la foto: " + (uploadError?.message || "Error desconocido"));
+          Alert.alert("Error al subir foto", "No se pudo subir el comprobante. Verifica tu conexión e inténtalo de nuevo.\n\nDetalle: " + (uploadError?.message || "Error desconocido"));
           setLoading(false);
           return;
         }
@@ -145,13 +145,15 @@ export default function RechargeScreen() {
         proofUrl: proofUrl,
       });
 
+      // Success! Show confirmation message
       Alert.alert(
-        "¡Recarga Enviada!",
-        `Tu recarga de $${numAmount.toLocaleString()} ha sido enviada para aprobación.\n\nEl administrador revisará tu comprobante y aprobará tu recarga pronto. Una vez aprobada, el saldo se reflejará en tu cuenta.`,
-        [{ text: "Entendido", onPress: () => router.back() }]
+        "¡Recarga Enviada! ✅",
+        `Tu recarga de $${numAmount.toLocaleString()} ha sido enviada para aprobación.\n\nEl administrador revisará tu comprobante y aprobará tu recarga pronto.\n\nUna vez aprobada, el saldo se reflejará automáticamente en tu cuenta.`,
+        [{ text: "Entendido 👍", onPress: () => router.back() }]
       );
     } catch (error: any) {
-      Alert.alert("Error", error?.message || "Error al enviar recarga");
+      const msg = error?.message || "Error al enviar recarga";
+      Alert.alert("Error", msg + "\n\nPor favor verifica tu conexión e inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }

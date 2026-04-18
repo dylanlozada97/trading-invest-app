@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, useContext } from "react";
+import { getApiBaseUrl } from "@/constants/oauth";
 
 export interface AppUser {
   id: number;
@@ -36,25 +36,37 @@ export async function loadUser(): Promise<AppUser | null> {
 }
 
 /**
- * Sync user data from the server. If userId is 0 or invalid, falls back to
- * searching by username so users who registered before the ID fix still work.
+ * Sync user data from the server using the correct API base URL.
+ * If userId is 0 or invalid, falls back to searching by username.
  */
 export async function syncUserFromServer(userId: number, username?: string): Promise<AppUser | null> {
-  const apiBase = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+  // Use the same URL helper as the rest of the app
+  const apiBase = getApiBaseUrl() || 'http://localhost:3000';
 
   // If userId is valid (> 0), try fetching by ID first (getUser is a GET query)
   if (userId > 0) {
     try {
       const input = encodeURIComponent(JSON.stringify({ json: { userId } }));
       const response = await fetch(`${apiBase}/api/trpc/investment.getUser?input=${input}`);
-      const data = await response.json();
-      const user = data.result?.data?.json;
-      if (user && user.id > 0) {
-        await saveUser(user);
-        return user;
+      if (response.ok) {
+        const data = await response.json();
+        const user = data?.result?.data?.json;
+        if (user && user.id > 0) {
+          const appUser: AppUser = {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            balance: user.balance,
+            totalReferrals: user.totalReferrals,
+            referralCode: user.referralCode,
+            referredBy: user.referredBy || null,
+          };
+          await saveUser(appUser);
+          return appUser;
+        }
       }
     } catch (error) {
-      console.error('Error syncing user by ID:', error);
+      console.error('[syncUser] Error fetching by ID:', error);
     }
   }
 
@@ -66,14 +78,25 @@ export async function syncUserFromServer(userId: number, username?: string): Pro
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ json: { username } })
       });
-      const data = await response.json();
-      const user = data.result?.data?.json;
-      if (user && user.id > 0) {
-        await saveUser(user);
-        return user;
+      if (response.ok) {
+        const data = await response.json();
+        const user = data?.result?.data?.json;
+        if (user && user.id > 0) {
+          const appUser: AppUser = {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            balance: user.balance,
+            totalReferrals: user.totalReferrals,
+            referralCode: user.referralCode,
+            referredBy: user.referredBy || null,
+          };
+          await saveUser(appUser);
+          return appUser;
+        }
       }
     } catch (error) {
-      console.error('Error syncing user by username:', error);
+      console.error('[syncUser] Error fetching by username:', error);
     }
   }
 
