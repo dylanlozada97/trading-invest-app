@@ -51,3 +51,9 @@
 - [x] BUG: El cierre de sesión no funciona correctamente
 - [x] BUG: El cierre de sesión no funciona en navegadores web (localStorage no se limpia)
 - [x] BUG: No se puede invertir, error al intentar crear una inversión
+
+## Nuevas Funcionalidades (Abril 21)
+- [x] Mostrar crecimiento diario de inversión al usuario (día a día hasta los 15 días)
+- [x] Barra de progreso visual en pantalla de inversiones
+- [x] Saldo proyectado día a día con ganancia acumulada
+- [x] Home screen muestra saldo total incluyendo ganancias diarias de inversiones activas
