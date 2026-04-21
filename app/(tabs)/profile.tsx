@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Text, View, ScrollView, Alert, StyleSheet, RefreshControl, TouchableOpacity } from "react-native";
+import { Text, View, ScrollView, Alert, StyleSheet, RefreshControl, TouchableOpacity, Platform } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { loadUser, clearUser, AppUser, getReferralLevel, syncUserFromServer } from "@/lib/auth-store";
 import { useRouter } from "expo-router";
@@ -30,26 +30,28 @@ export default function ProfileScreen() {
 
   const queryClient = useQueryClient();
 
+  const doLogout = async () => {
+    await clearUser();
+    queryClient.clear();
+    router.replace("/welcome");
+  };
+
   const handleLogout = () => {
-    Alert.alert(
-      "Cerrar Sesión",
-      "¿Estás seguro que deseas cerrar sesión?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Cerrar Sesión",
-          style: "destructive",
-          onPress: async () => {
-            // Clear user from AsyncStorage
-            await clearUser();
-            // Clear all React Query cache to avoid stale data on next login
-            queryClient.clear();
-            // Navigate to welcome screen
-            router.replace("/welcome");
-          },
-        },
-      ]
-    );
+    if (Platform.OS === "web") {
+      // Alert.alert does not work on web browsers - use window.confirm instead
+      if (typeof window !== "undefined" && window.confirm("¿Estás seguro que deseas cerrar sesión?")) {
+        doLogout();
+      }
+    } else {
+      Alert.alert(
+        "Cerrar Sesión",
+        "¿Estás seguro que deseas cerrar sesión?",
+        [
+          { text: "Cancelar", style: "cancel" },
+          { text: "Cerrar Sesión", style: "destructive", onPress: doLogout },
+        ]
+      );
+    }
   };
 
   const onRefresh = useCallback(async () => {
