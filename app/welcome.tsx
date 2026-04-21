@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Text, View, TextInput, ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity } from "react-native";
+import { Text, View, TextInput, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useRouter } from "expo-router";
 import { trpc } from "@/lib/trpc";
 import { saveUser, generateReferralCode } from "@/lib/auth-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { showAlert } from "@/lib/alert";
 
 
 export default function WelcomeScreen() {
@@ -28,11 +29,11 @@ export default function WelcomeScreen() {
 
   const handleRegister = async () => {
     if (!username.trim() || !email.trim() || !password.trim()) {
-      Alert.alert("Error", "Todos los campos son obligatorios");
+      showAlert("Error", "Todos los campos son obligatorios");
       return;
     }
     if (password.length < 6) {
-      Alert.alert("Error", "La contraseña debe tener al menos 6 caracteres");
+      showAlert("Error", "La contraseña debe tener al menos 6 caracteres");
       return;
     }
 
@@ -65,9 +66,9 @@ export default function WelcomeScreen() {
     } catch (error: any) {
       const msg = error?.message || "Error al registrar";
       if (msg.includes("Duplicate") && msg.includes("username")) {
-        Alert.alert("Error", "El nombre de usuario ya existe");
+        showAlert("Error", "El nombre de usuario ya existe");
       } else {
-        Alert.alert("Error", msg);
+        showAlert("Error", msg);
       }
     } finally {
       setLoading(false);
@@ -78,7 +79,7 @@ export default function WelcomeScreen() {
 
   const handleLogin = async () => {
     if (!loginUser.trim() || !loginPass.trim()) {
-      Alert.alert("Error", "Todos los campos son obligatorios");
+      showAlert("Error", "Todos los campos son obligatorios");
       return;
     }
 
@@ -86,7 +87,7 @@ export default function WelcomeScreen() {
     try {
       const savedPwd = await AsyncStorage.getItem("pwd_" + loginUser.trim());
       if (!savedPwd || savedPwd !== loginPass) {
-        Alert.alert("Error", "Usuario o contraseña incorrectos");
+        showAlert("Error", "Usuario o contraseña incorrectos");
         setLoading(false);
         return;
       }
@@ -120,9 +121,9 @@ export default function WelcomeScreen() {
         }
       }
 
-      Alert.alert("Error", "Usuario no encontrado");
+      showAlert("Error", "Usuario no encontrado");
     } catch (error: any) {
-      Alert.alert("Error", "Error al iniciar sesión");
+      showAlert("Error", "Error al iniciar sesión");
     } finally {
       setLoading(false);
     }

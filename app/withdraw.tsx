@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Text, View, TextInput, ScrollView, Alert, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableOpacity } from "react-native";
+import { Text, View, TextInput, ScrollView, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableOpacity } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useRouter } from "expo-router";
 import { trpc } from "@/lib/trpc";
 import { loadUser, syncUserFromServer } from "@/lib/auth-store";
+import { showAlert } from "@/lib/alert";
 
 
 export default function WithdrawScreen() {
@@ -19,11 +20,11 @@ export default function WithdrawScreen() {
   const handleWithdraw = async () => {
     const numAmount = parseFloat(amount);
     if (!numAmount || numAmount <= 0) {
-      Alert.alert("Error", "Ingresa un monto válido");
+      showAlert("Error", "Ingresa un monto válido");
       return;
     }
     if (!bankName.trim() || !accountNumber.trim() || !accountHolder.trim()) {
-      Alert.alert("Error", "Completa todos los datos bancarios");
+      showAlert("Error", "Completa todos los datos bancarios");
       return;
     }
 
@@ -31,24 +32,24 @@ export default function WithdrawScreen() {
     try {
       let user = await loadUser();
       if (!user) {
-        Alert.alert("Error", "Sesión expirada");
+        showAlert("Error", "Sesión expirada");
+        setLoading(false);
         return;
       }
 
-      // Ensure we have the real userId from the server
       if (user.id === 0 || !user.id) {
         const synced = await syncUserFromServer(user.id, user.username);
         if (synced && synced.id > 0) {
           user = synced;
         } else {
-          Alert.alert("Error", "No se pudo verificar tu cuenta. Cierra sesión e inicia de nuevo.");
+          showAlert("Error", "No se pudo verificar tu cuenta. Cierra sesión e inicia de nuevo.");
           setLoading(false);
           return;
         }
       }
 
       if (numAmount > parseFloat(user.balance)) {
-        Alert.alert("Error", "Saldo insuficiente");
+        showAlert("Error", "Saldo insuficiente");
         setLoading(false);
         return;
       }
@@ -60,13 +61,13 @@ export default function WithdrawScreen() {
         accountNumber: accountNumber.trim(),
       });
 
-      Alert.alert(
+      showAlert(
         "Retiro Solicitado",
         "Tu solicitud de retiro está pendiente de aprobación. El administrador la procesará pronto.",
         [{ text: "OK", onPress: () => router.back() }]
       );
     } catch (error: any) {
-      Alert.alert("Error", error?.message || "Error al solicitar retiro");
+      showAlert("Error", error?.message || "Error al solicitar retiro");
     } finally {
       setLoading(false);
     }

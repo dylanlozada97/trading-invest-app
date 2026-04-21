@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
-import { Text, View, ScrollView, Alert, StyleSheet, FlatList, RefreshControl } from "react-native";
+import { Text, View, ScrollView, StyleSheet, FlatList, RefreshControl } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { loadUser, saveUser, AppUser, syncUserFromServer } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
 import { Pressable } from "react-native";
+import { showAlert } from "@/lib/alert";
 
 export default function InvestmentsScreen() {
   const [user, setUser] = useState<AppUser | null>(null);
@@ -39,11 +40,11 @@ export default function InvestmentsScreen() {
     if (!user) return;
     const balance = parseFloat(user.balance);
     if (balance < amount) {
-      Alert.alert("Saldo Insuficiente", "No tienes suficiente saldo. Recarga primero.");
+      showAlert("Saldo Insuficiente", "No tienes suficiente saldo. Recarga primero.");
       return;
     }
 
-    Alert.alert(
+    showAlert(
       "Confirmar Inversión",
       `¿Deseas invertir $${amount.toLocaleString()}?\n\nGanarás $${(amount * 0.6).toLocaleString()} en 15 días.`,
       [
@@ -52,19 +53,19 @@ export default function InvestmentsScreen() {
           text: "Invertir",
           onPress: async () => {
             try {
-              await createInvestmentMutation.mutateAsync({
+              const result = await createInvestmentMutation.mutateAsync({
                 userId: user.id,
                 amount: amount.toString(),
               });
 
-              const newBalance = (balance - amount).toString();
+              const newBalance = (result as any).newBalance ?? (balance - amount).toString();
               const updatedUser = { ...user, balance: newBalance };
               await saveUser(updatedUser);
               setUser(updatedUser);
               investmentsQuery.refetch();
-              Alert.alert("Inversión Exitosa", `Has invertido $${amount.toLocaleString()}. Recibirás $${(amount * 1.6).toLocaleString()} en 15 días.`);
+              showAlert("Inversión Exitosa", `Has invertido $${amount.toLocaleString()}. Recibirás $${(amount * 1.6).toLocaleString()} en 15 días.`);
             } catch (error: any) {
-              Alert.alert("Error", error?.message || "Error al invertir");
+              showAlert("Error", error?.message || "Error al invertir");
             }
           },
         },

@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Text, View, TextInput, ScrollView, Alert, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Image, TouchableOpacity } from "react-native";
+import { Text, View, TextInput, ScrollView, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Image, TouchableOpacity } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useRouter } from "expo-router";
 import { trpc } from "@/lib/trpc";
 import { loadUser, syncUserFromServer } from "@/lib/auth-store";
 import * as ImagePicker from "expo-image-picker";
+import { showAlert } from "@/lib/alert";
 
 export default function RechargeScreen() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function RechargeScreen() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permisos", "Necesitamos acceso a tu galería para subir el comprobante");
+        showAlert("Permisos", "Necesitamos acceso a tu galería para subir el comprobante");
         return;
       }
 
@@ -40,7 +41,7 @@ export default function RechargeScreen() {
         }
       }
     } catch (error) {
-      Alert.alert("Error", "No se pudo seleccionar la imagen");
+      showAlert("Error", "No se pudo seleccionar la imagen");
     }
   };
 
@@ -48,7 +49,7 @@ export default function RechargeScreen() {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permisos", "Necesitamos acceso a tu cámara para tomar la foto");
+        showAlert("Permisos", "Necesitamos acceso a tu cámara para tomar la foto");
         return;
       }
 
@@ -65,7 +66,7 @@ export default function RechargeScreen() {
         }
       }
     } catch (error) {
-      Alert.alert("Error", "No se pudo tomar la foto");
+      showAlert("Error", "No se pudo tomar la foto");
     }
   };
 
@@ -75,7 +76,7 @@ export default function RechargeScreen() {
       pickImage();
       return;
     }
-    Alert.alert(
+    showAlert(
       "Subir Comprobante",
       "¿Cómo quieres subir el comprobante?",
       [
@@ -92,15 +93,15 @@ export default function RechargeScreen() {
 
     const numAmount = parseFloat(amount);
     if (!numAmount || numAmount <= 0) {
-      Alert.alert("Error", "Ingresa un monto válido");
+      showAlert("Error", "Ingresa un monto válido");
       return;
     }
     if (!reference.trim()) {
-      Alert.alert("Error", "Ingresa la referencia del depósito");
+      showAlert("Error", "Ingresa la referencia del depósito");
       return;
     }
     if (!proofImage) {
-      Alert.alert("Error", "Debes subir la foto del comprobante de pago");
+      showAlert("Error", "Debes subir la foto del comprobante de pago");
       return;
     }
 
@@ -109,7 +110,7 @@ export default function RechargeScreen() {
       // Always sync user from server first to get the real ID
       let user = await loadUser();
       if (!user) {
-        Alert.alert("Error", "Sesión expirada. Por favor inicia sesión de nuevo.");
+        showAlert("Error", "Sesión expirada. Por favor inicia sesión de nuevo.");
         setLoading(false);
         return;
       }
@@ -119,7 +120,7 @@ export default function RechargeScreen() {
       if (synced && synced.id > 0) {
         user = synced;
       } else if (!user.id || user.id === 0) {
-        Alert.alert("Error", "No se pudo verificar tu cuenta. Por favor cierra sesión e inicia de nuevo.");
+        showAlert("Error", "No se pudo verificar tu cuenta. Por favor cierra sesión e inicia de nuevo.");
         setLoading(false);
         return;
       }
@@ -136,7 +137,7 @@ export default function RechargeScreen() {
           });
           proofUrl = uploadResult.url;
         } catch (uploadError: any) {
-          Alert.alert("Error al subir foto", "No se pudo subir el comprobante. Verifica tu conexión e inténtalo de nuevo.");
+          showAlert("Error al subir foto", "No se pudo subir el comprobante. Verifica tu conexión e inténtalo de nuevo.");
           setLoading(false);
           return;
         }
@@ -157,7 +158,7 @@ export default function RechargeScreen() {
       // Show success screen (replaces the form)
     } catch (error: any) {
       const msg = error?.message || "Error al enviar recarga";
-      Alert.alert("Error", msg + "\n\nPor favor verifica tu conexión e inténtalo de nuevo.");
+      showAlert("Error", msg + "\n\nPor favor verifica tu conexión e inténtalo de nuevo.");
       setLoading(false);
     }
   };

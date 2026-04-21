@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
-import { Text, View, ScrollView, Alert, StyleSheet, Share, RefreshControl } from "react-native";
+import { Text, View, ScrollView, StyleSheet, Share, RefreshControl } from "react-native";
+import { showAlert } from "@/lib/alert";
 import { ScreenContainer } from "@/components/screen-container";
 import { loadUser, AppUser, getReferralLevel, syncUserFromServer } from "@/lib/auth-store";
 import { trpc } from "@/lib/trpc";
@@ -46,9 +47,9 @@ export default function ReferralsScreen() {
     if (!user) return;
     try {
       await Clipboard.setStringAsync(user.referralCode);
-      Alert.alert("Copiado", "Código copiado al portapapeles");
+      showAlert("Copiado", "Código copiado al portapapeles");
     } catch {
-      Alert.alert("Info", `Tu código: ${user.referralCode}`);
+      showAlert("Info", `Tu código: ${user.referralCode}`);
     }
   };
 
