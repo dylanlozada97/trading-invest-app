@@ -85,6 +85,7 @@ export default function WelcomeScreen() {
 
     setLoading(true);
     try {
+      // Verify password from local storage first
       const savedPwd = await AsyncStorage.getItem("pwd_" + loginUser.trim());
       if (!savedPwd || savedPwd !== loginPass) {
         showAlert("Error", "Usuario o contraseña incorrectos");
@@ -92,7 +93,7 @@ export default function WelcomeScreen() {
         return;
       }
 
-      // Always fetch user from server to get the real ID and latest balance
+      // Try to fetch user from server to get latest data
       try {
         const serverUser = await getUserByUsernameMutation.mutateAsync({ username: loginUser.trim() });
         if (serverUser) {
@@ -109,8 +110,8 @@ export default function WelcomeScreen() {
           router.replace("/(tabs)");
           return;
         }
-      } catch (e) {
-        // Fallback to local data if server is unavailable
+      } catch (serverError) {
+        // Server error - use local data as fallback
         const savedUser = await AsyncStorage.getItem("auth_user");
         if (savedUser) {
           const user = JSON.parse(savedUser);

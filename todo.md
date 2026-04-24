@@ -57,3 +57,6 @@
 - [x] Barra de progreso visual en pantalla de inversiones
 - [x] Saldo proyectado día a día con ganancia acumulada
 - [x] Home screen muestra saldo total incluyendo ganancias diarias de inversiones activas
+
+## Bugs Reportados (Abril 21 - Ronda 3)
+- [x] BUG: El login no deja ingresar con usuarios registrados
