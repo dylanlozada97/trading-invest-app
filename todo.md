@@ -99,3 +99,6 @@
 - [x] Marcar inversión como completada al pagar
 - [x] Mostrar estado "Completada" en la UI de inversiones
 - [x] Job periódico que revise inversiones vencidas cada hora
+
+## Mejoras (Abril 24 - Simulación tiempo)
+- [x] Botón admin para adelantar inversiones 15 días y probar pago automático

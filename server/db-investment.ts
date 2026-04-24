@@ -615,6 +615,44 @@ export async function processMaturedInvestments() {
   }
 }
 
+// SIMULATE TIME PASSING (for testing - moves active investment dates back by N days)
+export async function simulateTimePassed(days: number = 15) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    // Get all active investments
+    const activeInvestments = await db.select().from(schema.investments)
+      .where(eq(schema.investments.status, "active"));
+
+    if (activeInvestments.length === 0) {
+      return { success: true, message: "No hay inversiones activas para adelantar.", affected: 0 };
+    }
+
+    // Move createdAt back by N days for each active investment
+    for (const inv of activeInvestments) {
+      const originalDate = new Date(inv.createdAt);
+      const newDate = new Date(originalDate.getTime() - (days * 24 * 60 * 60 * 1000));
+      await db.update(schema.investments)
+        .set({ createdAt: newDate })
+        .where(eq(schema.investments.id, inv.id));
+      console.log(`[SimTime] Investment #${inv.id}: moved from ${originalDate.toISOString()} to ${newDate.toISOString()} (-${days} days)`);
+    }
+
+    // Now run the auto-pay to process them
+    const payResult = await processMaturedInvestments();
+
+    return {
+      success: true,
+      message: `Se adelantaron ${activeInvestments.length} inversiones por ${days} d\u00edas. ${payResult.processed} fueron pagadas autom\u00e1ticamente.`,
+      affected: activeInvestments.length,
+      paid: payResult.processed,
+    };
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}
+
 // RESET ALL DATA (for testing - clears recharges, transactions, investments, withdrawals, commissions and resets balances)
 export async function resetAllData() {
   const db = await getDb();

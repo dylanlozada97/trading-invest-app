@@ -899,6 +899,13 @@
                     <button class="btn btn-approve" onclick="saveSettings()" style="width: 100%; margin-top: 20px;">💾 Guardar Configuración</button>
 
                     <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #334155;">
+                        <h3 style="color: #fbbf24; margin-bottom: 12px;">⏩ Herramientas de Prueba</h3>
+                        <p style="color: #9BA1A6; margin-bottom: 16px; font-size: 14px;">Simula el paso de 15 días para que las inversiones activas venzan y se paguen automáticamente. Útil para probar el flujo completo sin esperar.</p>
+                        <button class="btn" onclick="simulateTime()" style="width: 100%; background: #F59E0B; color: #0a0f1e; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 12px;">⏩ Adelantar 15 Días (Simular Vencimiento)</button>
+                        <button class="btn" onclick="processInvestmentsNow()" style="width: 100%; background: #4ADE80; color: #0a0f1e; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer;">🔄 Procesar Inversiones Vencidas Ahora</button>
+                    </div>
+
+                    <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #334155;">
                         <h3 style="color: #EF4444; margin-bottom: 12px;">⚠️ Zona de Peligro</h3>
                         <p style="color: #9BA1A6; margin-bottom: 16px; font-size: 14px;">Esta acción borrará todas las recargas, retiros, inversiones, comisiones, transacciones y reseteará todos los saldos a $0. No se puede deshacer.</p>
                         <button class="btn" onclick="resetAllData()" style="width: 100%; background: #EF4444; color: white; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer;">🗑️ Borrar Todos los Datos y Resetear Saldos</button>
@@ -1582,6 +1589,27 @@
 
             localStorage.setItem('adminSettings', JSON.stringify(settings));
             showAlert('Configuración guardada correctamente', 'success');
+        }
+
+        async function simulateTime() {
+            if (!confirm('¿Adelantar 15 días todas las inversiones activas?\n\nEsto hará que las inversiones activas se consideren vencidas y se paguen automáticamente (capital + 60% ganancia al saldo del usuario).')) return;
+            try {
+                const result = await trpcPost('admin.simulateTimePassed', { days: 15 });
+                showAlert(result.message || 'Simulación completada', 'success');
+                loadAllData();
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function processInvestmentsNow() {
+            try {
+                const result = await trpcPost('admin.processMaturedInvestments', {});
+                showAlert(`Procesadas ${result.processed} inversiones vencidas`, 'success');
+                loadAllData();
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
         }
 
         async function resetAllData() {

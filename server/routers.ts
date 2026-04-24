@@ -111,6 +111,9 @@ export const appRouter = router({
       .mutation(async ({ input }) => dbInv.rejectWithdrawal(input.id)),
     processMaturedInvestments: publicProcedure
       .mutation(async () => dbInv.processMaturedInvestments()),
+    simulateTimePassed: publicProcedure
+      .input(z.object({ days: z.number().optional() }))
+      .mutation(async ({ input }) => dbInv.simulateTimePassed(input.days ?? 15)),
     resetAllData: publicProcedure
       .mutation(async () => dbInv.resetAllData()),
   }),
