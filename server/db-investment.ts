@@ -90,13 +90,20 @@ export async function createInvestment(userId: number, amount: string) {
     const newBalance = (currentBalance - investAmount).toString();
     await db.update(schema.appUsers).set({ balance: newBalance }).where(eq(schema.appUsers.id, userId));
 
-    // Create investment record
-    const result = await db.insert(schema.investments).values({
+     // Create investment record
+    await db.insert(schema.investments).values({
       userId,
       amount,
       status: "active",
       createdAt: new Date(),
     });
+
+    // Get the inserted investment ID by querying the latest one for this user
+    const inserted = await db.select().from(schema.investments)
+      .where(eq(schema.investments.userId, userId))
+      .orderBy(schema.investments.id)
+      .limit(1);
+    const investmentId = inserted.length > 0 ? inserted[inserted.length - 1].id : 0;
 
     // Record transaction
     await db.insert(schema.transactions).values({
@@ -107,7 +114,7 @@ export async function createInvestment(userId: number, amount: string) {
       createdAt: new Date(),
     });
 
-    return { success: true, investmentId: (result as any).insertId || 0, newBalance };
+    return { success: true, investmentId, newBalance };
   } catch (error: any) {
     throw new Error(error.message);
   }
