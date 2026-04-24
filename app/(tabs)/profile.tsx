@@ -28,6 +28,11 @@ export default function ProfileScreen() {
     { enabled: !!user?.id && user.id > 0 }
   );
 
+  const withdrawalsQuery = trpc.investment.getWithdrawals.useQuery(
+    { userId: user?.id ?? 0 },
+    { enabled: !!user?.id && user.id > 0 }
+  );
+
   const queryClient = useQueryClient();
 
   const doLogout = async () => {
@@ -51,6 +56,7 @@ export default function ProfileScreen() {
     setRefreshing(true);
     await loadData();
     rechargesQuery.refetch();
+    withdrawalsQuery.refetch();
     setRefreshing(false);
   }, [loadData, rechargesQuery]);
 
@@ -63,12 +69,20 @@ export default function ProfileScreen() {
     return { label: status, color: "#9BA1A6", icon: "•" };
   };
 
+  const getWithdrawalStatusLabel = (status: string) => {
+    if (status === "pending") return { label: "Pendiente", color: "#F59E0B", icon: "⏳" };
+    if (status === "approved") return { label: "Aprobado", color: "#4ADE80", icon: "✅" };
+    if (status === "rejected") return { label: "Rechazado", color: "#EF4444", icon: "❌" };
+    return { label: status, color: "#9BA1A6", icon: "•" };
+  };
+
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
   };
 
   const recharges = rechargesQuery.data ?? [];
+  const withdrawals = withdrawalsQuery.data ?? [];
 
   if (!user) return null;
 
@@ -207,6 +221,68 @@ export default function ProfileScreen() {
                       <Text style={s.rechargeRefValue}>{r.reference}</Text>
                     </View>
                   )}
+                </View>
+              );
+            })
+          )}
+        </View>
+
+        {/* Historial de Retiros */}
+        <View style={s.section}>
+          <View style={s.sectionHeader}>
+            <Text style={s.sectionTitle}>Mis Retiros</Text>
+            <View style={s.countBadge}>
+              <Text style={s.countBadgeText}>{withdrawals.length}</Text>
+            </View>
+          </View>
+          {withdrawalsQuery.isLoading ? (
+            <View style={s.emptyCard}>
+              <Text style={s.emptyText}>Cargando retiros...</Text>
+            </View>
+          ) : withdrawals.length === 0 ? (
+            <View style={s.emptyCard}>
+              <Text style={s.emptyIcon}>🏦</Text>
+              <Text style={s.emptyText}>No tienes retiros registrados</Text>
+              <Text style={s.emptySubtext}>Tus retiros aparecerán aquí</Text>
+            </View>
+          ) : (
+            [...withdrawals].reverse().map((w: any) => {
+              const st = getWithdrawalStatusLabel(w.status);
+              let bankDisplay = w.bankName || '-';
+              let holderDisplay = '-';
+              if (w.bankName && w.bankName.includes(' - ')) {
+                const parts = w.bankName.split(' - ');
+                bankDisplay = parts[0].trim();
+                holderDisplay = parts.slice(1).join(' - ').trim();
+              }
+              return (
+                <View key={w.id} style={s.withdrawalCard}>
+                  <View style={s.rechargeHeader}>
+                    <View style={s.rechargeLeft}>
+                      <Text style={s.rechargeAmount}>${parseFloat(w.amount).toLocaleString("es-CO")}</Text>
+                      <Text style={s.rechargeDate}>{formatDate(w.createdAt)}</Text>
+                    </View>
+                    <View style={[s.badge, { backgroundColor: st.color + "18" }]}>
+                      <Text style={s.badgeIcon}>{st.icon}</Text>
+                      <Text style={[s.badgeText, { color: st.color }]}>{st.label}</Text>
+                    </View>
+                  </View>
+                  <View style={s.withdrawalDetails}>
+                    <View style={s.withdrawalRow}>
+                      <Text style={s.withdrawalDetailLabel}>Banco:</Text>
+                      <Text style={s.withdrawalDetailValue}>{bankDisplay}</Text>
+                    </View>
+                    <View style={s.withdrawalRow}>
+                      <Text style={s.withdrawalDetailLabel}>Cuenta:</Text>
+                      <Text style={s.withdrawalDetailValue}>{w.accountNumber || '-'}</Text>
+                    </View>
+                    {holderDisplay !== '-' && (
+                      <View style={[s.withdrawalRow, { borderBottomWidth: 0 }]}>
+                        <Text style={s.withdrawalDetailLabel}>Titular:</Text>
+                        <Text style={s.withdrawalDetailValue}>{holderDisplay}</Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
               );
             })
@@ -409,4 +485,29 @@ const s = StyleSheet.create({
   },
   logoutIcon: { fontSize: 18 },
   logoutText: { color: "#DC2626", fontSize: 16, fontWeight: "bold" },
+
+  // Withdrawal Cards
+  withdrawalCard: {
+    backgroundColor: "#16213e",
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#1e2d4a",
+  },
+  withdrawalDetails: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#1e2d4a",
+  },
+  withdrawalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1e2d4a08",
+  },
+  withdrawalDetailLabel: { fontSize: 13, color: "#9BA1A6" },
+  withdrawalDetailValue: { fontSize: 13, color: "#ECEDEE", fontWeight: "600" },
 });

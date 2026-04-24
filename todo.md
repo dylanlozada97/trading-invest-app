@@ -85,3 +85,10 @@
 
 ## Bugs (Abril 24 - Retiros)
 - [x] BUG: Los retiros no se están aprobando desde el panel admin
+
+## Bugs (Abril 24 - Retiros v2)
+- [ ] BUG: El botón de aprobar/rechazar retiro no funciona en el panel admin (el retiro se descuenta pero no se puede procesar)
+
+## Mejoras (Abril 24 - Historial Retiros)
+- [x] Mostrar al usuario el historial de retiros con estado (pendiente, aprobado, rechazado)
+- [x] Mostrar notificación visual del estado de cada retiro
