@@ -102,3 +102,11 @@
 
 ## Mejoras (Abril 24 - Simulación tiempo)
 - [x] Botón admin para adelantar inversiones 15 días y probar pago automático
+
+## Mejoras (Abril 24 - Límites)
+- [x] Inversión mínima $50,000 y máxima $1,000,000 por operación
+- [x] Inversión máxima por día por usuario $1,000,000
+- [x] Máximo 3 inversiones activas simultáneas por usuario
+- [x] Retiro mínimo $50,000 y máximo $1,000,000 por operación
+- [x] Retiro máximo por día por usuario $1,000,000
+- [x] Mostrar mensajes claros al usuario cuando se exceda un límite

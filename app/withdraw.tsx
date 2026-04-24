@@ -155,8 +155,9 @@ export default function WithdrawScreen() {
 
             {/* Monto */}
             <Text style={s.label}>Monto a Retirar</Text>
+            <Text style={s.limitsText}>Mín: $50,000 · Máx: $1,000,000 · Límite diario: $1,000,000</Text>
             <View style={s.quickAmounts}>
-              {[50000, 100000, 200000, 500000].map((a) => (
+              {[50000, 100000, 200000, 500000, 1000000].map((a) => (
                 <TouchableOpacity
                   key={a}
                   onPress={() => setAmount(a.toString())}
@@ -283,6 +284,7 @@ const s = StyleSheet.create({
   quickBtnActive: { borderColor: "#DC2626", backgroundColor: "#DC262618" },
   quickBtnText: { color: "#9BA1A6", fontWeight: "600", fontSize: 13 },
   quickBtnTextActive: { color: "#DC2626" },
+  limitsText: { fontSize: 11, color: "#9BA1A6", marginBottom: 8 },
   input: {
     borderWidth: 1,
     borderColor: "#1e2d4a",

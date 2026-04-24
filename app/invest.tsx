@@ -96,6 +96,7 @@ export default function InvestScreen() {
           </View>
 
           <Text style={s.label}>Selecciona un Monto</Text>
+          <Text style={s.limitsText}>Mín: $50,000 · Máx: $1,000,000 · Límite diario: $1,000,000 · Máx 3 activas</Text>
           <View style={s.quickAmounts}>
             {[50000, 100000, 200000, 500000, 1000000].map((a) => (
               <TouchableOpacity key={a} onPress={() => setAmount(a.toString())} style={[s.quickBtn, amount === a.toString() && s.quickBtnActive]} activeOpacity={0.7}>
@@ -167,4 +168,5 @@ const s = StyleSheet.create({
   submitBtn: { backgroundColor: "#DC2626", paddingVertical: 16, borderRadius: 12, alignItems: "center", marginTop: 24 },
   submitBtnDisabled: { opacity: 0.6 },
   submitBtnText: { color: "#fff", fontSize: 17, fontWeight: "bold" },
+  limitsText: { fontSize: 11, color: "#9BA1A6", marginBottom: 8 },
 });

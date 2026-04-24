@@ -97,6 +97,37 @@ export async function createInvestment(userId: number, amount: string) {
     const currentBalance = parseFloat(users[0].balance);
     const investAmount = parseFloat(amount);
 
+    // --- LÍMITES DE INVERSIÓN ---
+    const MIN_INVESTMENT = 50000;
+    const MAX_INVESTMENT = 1000000;
+    const MAX_DAILY_INVESTMENT = 1000000;
+    const MAX_ACTIVE_INVESTMENTS = 3;
+
+    if (investAmount < MIN_INVESTMENT) {
+      throw new Error(`El monto mínimo de inversión es $${MIN_INVESTMENT.toLocaleString('es-CO')}`);
+    }
+    if (investAmount > MAX_INVESTMENT) {
+      throw new Error(`El monto máximo por inversión es $${MAX_INVESTMENT.toLocaleString('es-CO')}`);
+    }
+
+    // Check active investments count
+    const activeInvestments = await db.select().from(schema.investments)
+      .where(and(eq(schema.investments.userId, userId), eq(schema.investments.status, "active")));
+    if (activeInvestments.length >= MAX_ACTIVE_INVESTMENTS) {
+      throw new Error(`Solo puedes tener ${MAX_ACTIVE_INVESTMENTS} inversiones activas al mismo tiempo. Espera a que alguna se complete.`);
+    }
+
+    // Check daily investment limit
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayInvestments = await db.select().from(schema.investments)
+      .where(and(eq(schema.investments.userId, userId), sql`${schema.investments.createdAt} >= ${today}`));
+    const todayTotal = todayInvestments.reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
+    if (todayTotal + investAmount > MAX_DAILY_INVESTMENT) {
+      const remaining = MAX_DAILY_INVESTMENT - todayTotal;
+      throw new Error(`Límite diario de inversión: $${MAX_DAILY_INVESTMENT.toLocaleString('es-CO')}. Hoy has invertido $${todayTotal.toLocaleString('es-CO')}. Puedes invertir hasta $${remaining.toLocaleString('es-CO')} más hoy.`);
+    }
+
     if (currentBalance < investAmount) {
       throw new Error(`Saldo insuficiente. Tu saldo es $${currentBalance.toLocaleString('es-CO')}`);
     }
@@ -350,7 +381,35 @@ export async function createWithdrawal(userId: number, data: { amount: string; a
     if (user.length === 0) throw new Error("Usuario no encontrado");
     const currentBalance = parseFloat(user[0].balance);
     const withdrawAmount = parseFloat(data.amount);
+
+    // --- LÍMITES DE RETIRO ---
+    const MIN_WITHDRAWAL = 50000;
+    const MAX_WITHDRAWAL = 1000000;
+    const MAX_DAILY_WITHDRAWAL = 1000000;
+
     if (withdrawAmount <= 0) throw new Error("El monto debe ser mayor a 0");
+    if (withdrawAmount < MIN_WITHDRAWAL) {
+      throw new Error(`El monto mínimo de retiro es $${MIN_WITHDRAWAL.toLocaleString('es-CO')}`);
+    }
+    if (withdrawAmount > MAX_WITHDRAWAL) {
+      throw new Error(`El monto máximo por retiro es $${MAX_WITHDRAWAL.toLocaleString('es-CO')}`);
+    }
+
+    // Check daily withdrawal limit
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayWithdrawals = await db.select().from(schema.withdrawals)
+      .where(and(
+        eq(schema.withdrawals.userId, userId),
+        sql`${schema.withdrawals.createdAt} >= ${today}`,
+        sql`${schema.withdrawals.status} != 'rejected'`
+      ));
+    const todayTotal = todayWithdrawals.reduce((sum, w) => sum + parseFloat(w.amount), 0);
+    if (todayTotal + withdrawAmount > MAX_DAILY_WITHDRAWAL) {
+      const remaining = MAX_DAILY_WITHDRAWAL - todayTotal;
+      throw new Error(`Límite diario de retiro: $${MAX_DAILY_WITHDRAWAL.toLocaleString('es-CO')}. Hoy has solicitado $${todayTotal.toLocaleString('es-CO')}. Puedes retirar hasta $${remaining.toLocaleString('es-CO')} más hoy.`);
+    }
+
     if (currentBalance < withdrawAmount) throw new Error("Saldo insuficiente");
 
     // Deduct balance immediately (reserve funds)

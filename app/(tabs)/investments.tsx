@@ -268,6 +268,9 @@ export default function InvestmentsScreen() {
           <TouchableOpacity style={s.newInvestBtn} onPress={() => router.push("/invest")} activeOpacity={0.8}>
             <Text style={s.newInvestBtnText}>+ Nueva Inversión</Text>
           </TouchableOpacity>
+          <View style={s.limitsInfo}>
+            <Text style={s.limitsText}>Mín: $50,000 · Máx: $1,000,000 · Límite diario: $1,000,000 · Máx 3 activas</Text>
+          </View>
         </View>
 
         {/* Inversiones activas */}
@@ -409,4 +412,8 @@ const s = StyleSheet.create({
   completedDetails: { flexDirection: "row", justifyContent: "space-between", paddingTop: 8, borderTopWidth: 1, borderTopColor: "#1e2d4a" },
   completedGain: { fontSize: 14, color: "#4ADE80", fontWeight: "600" },
   completedTotal: { fontSize: 14, color: "#fbbf24", fontWeight: "600" },
+
+  // Limits info
+  limitsInfo: { marginTop: 8, paddingHorizontal: 4 },
+  limitsText: { fontSize: 11, color: "#9BA1A6", textAlign: "center" },
 });
