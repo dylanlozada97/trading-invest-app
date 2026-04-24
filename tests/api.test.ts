@@ -19,12 +19,20 @@ describe("API Endpoints", () => {
     return data.result?.data?.json;
   }
 
-  it("should return admin stats", async () => {
+  it("should return admin stats with platform balance fields", async () => {
     const stats = await trpcGet("admin.stats");
     expect(stats).toBeDefined();
     expect(stats).toHaveProperty("totalUsers");
     expect(stats).toHaveProperty("activeInvestments");
     expect(stats).toHaveProperty("totalBalance");
+    // New platform real balance fields
+    expect(stats).toHaveProperty("totalApprovedRecharges");
+    expect(stats).toHaveProperty("totalApprovedWithdrawals");
+    expect(stats).toHaveProperty("platformRealBalance");
+    // Verify they are numeric strings
+    expect(parseFloat(stats.totalApprovedRecharges)).not.toBeNaN();
+    expect(parseFloat(stats.totalApprovedWithdrawals)).not.toBeNaN();
+    expect(parseFloat(stats.platformRealBalance)).not.toBeNaN();
   });
 
   it("should return admin users list", async () => {

@@ -541,20 +541,20 @@
         <h1>🏛️ Panel Administrativo - Inversiones China</h1>
         <div class="header-stats">
             <div class="stat-item">
-                <span class="stat-label">Saldo Total</span>
-                <span class="stat-value">$<span id="totalBalance">0.00</span></span>
+                <span class="stat-label">Saldo Real Plataforma</span>
+                <span class="stat-value">$<span id="platformRealBalance">0.00</span></span>
             </div>
             <div class="stat-item">
-                <span class="stat-label">Inversiones Activas</span>
-                <span class="stat-value"><span id="activeInvestments">0</span></span>
+                <span class="stat-label">Total Ingresado</span>
+                <span class="stat-value" style="color: #4ADE80;">$<span id="totalApprovedRecharges">0.00</span></span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Total Retirado</span>
+                <span class="stat-value" style="color: #F87171;">$<span id="totalApprovedWithdrawals">0.00</span></span>
             </div>
             <div class="stat-item">
                 <span class="stat-label">Usuarios</span>
                 <span class="stat-value"><span id="totalUsers">0</span></span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Recargas Pendientes</span>
-                <span class="stat-value"><span id="pendingRecharges">0</span></span>
             </div>
         </div>
     </div>
@@ -575,10 +575,25 @@
         <!-- Dashboard Section -->
         <div id="dashboard" class="content-section active">
             <div class="dashboard-grid">
+                <div class="dashboard-card" style="border: 2px solid #fbbf24; background: rgba(251, 191, 36, 0.08);">
+                    <h3>💰 Saldo Real Plataforma</h3>
+                    <div class="value">$<span id="dashboardPlatformBalance">0.00</span></div>
+                    <div class="change">Recargas aprobadas - Retiros aprobados</div>
+                </div>
+                <div class="dashboard-card" style="border-left: 3px solid #4ADE80;">
+                    <h3>📥 Total Ingresado (Recargas)</h3>
+                    <div class="value" style="color: #4ADE80;">$<span id="dashboardTotalIncome">0.00</span></div>
+                    <div class="change">Recargas aprobadas</div>
+                </div>
+                <div class="dashboard-card" style="border-left: 3px solid #F87171;">
+                    <h3>📤 Total Retirado</h3>
+                    <div class="value" style="color: #F87171;">$<span id="dashboardTotalWithdrawn">0.00</span></div>
+                    <div class="change">Retiros aprobados</div>
+                </div>
                 <div class="dashboard-card">
-                    <h3>Saldo Total Plataforma</h3>
+                    <h3>Saldo Usuarios (Circulación)</h3>
                     <div class="value">$<span id="dashboardTotalBalance">0.00</span></div>
-                    <div class="change">Dinero en circulación</div>
+                    <div class="change">Dinero en cuentas de usuarios</div>
                 </div>
                 <div class="dashboard-card">
                     <h3>Inversiones Activas</h3>
@@ -712,7 +727,7 @@
                     <button class="filter-btn active" onclick="filterWithdrawals('all')">Todas</button>
                     <button class="filter-btn" onclick="filterWithdrawals('pending')">Pendientes</button>
                     <button class="filter-btn" onclick="filterWithdrawals('approved')">Aprobadas</button>
-                    <button class="filter-btn" onclick="filterWithdrawals('completed')">Completadas</button>
+                    <button class="filter-btn" onclick="filterWithdrawals('rejected')">Rechazadas</button>
                 </div>
                 <table>
                     <thead>
@@ -1082,11 +1097,20 @@
                 console.log('Withdrawals loaded:', withdrawals);
                 allData.withdrawals = (withdrawals || []).map(w => {
                     const user = allData.users.find(u => u.id === w.userId);
+                    // bankName comes as 'BankName - HolderName' from the app
+                    let bankDisplay = w.bankName || '-';
+                    let holderDisplay = user?.username || '-';
+                    if (w.bankName && w.bankName.includes(' - ')) {
+                        const parts = w.bankName.split(' - ');
+                        bankDisplay = parts[0].trim();
+                        holderDisplay = parts.slice(1).join(' - ').trim();
+                    }
                     return {
                         ...w,
                         userName: user?.username || 'Usuario #' + w.userId,
                         bankAccount: w.accountNumber || '-',
-                        accountHolder: user?.username || '-'
+                        bankDisplay: bankDisplay,
+                        accountHolder: holderDisplay
                     };
                 });
                 renderWithdrawalsTable();
@@ -1142,22 +1166,30 @@
             const pwa = parseFloat(stats.pendingWithdrawalsAmount) || 0;
             const tc = parseFloat(stats.totalCommissions) || 0;
             const tdc = parseFloat(stats.todayCommissions) || 0;
+            const tar = parseFloat(stats.totalApprovedRecharges) || 0;
+            const taw = parseFloat(stats.totalApprovedWithdrawals) || 0;
+            const prb = parseFloat(stats.platformRealBalance) || 0;
 
-            document.getElementById('totalBalance').textContent = tb.toFixed(2);
-            document.getElementById('activeInvestments').textContent = stats.activeInvestments || 0;
+            // Header stats
+            document.getElementById('platformRealBalance').textContent = prb.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+            document.getElementById('totalApprovedRecharges').textContent = tar.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+            document.getElementById('totalApprovedWithdrawals').textContent = taw.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
             document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
-            document.getElementById('pendingRecharges').textContent = stats.pendingRecharges || 0;
 
-            document.getElementById('dashboardTotalBalance').textContent = tb.toFixed(2);
+            // Dashboard cards
+            document.getElementById('dashboardPlatformBalance').textContent = prb.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+            document.getElementById('dashboardTotalIncome').textContent = tar.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+            document.getElementById('dashboardTotalWithdrawn').textContent = taw.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+            document.getElementById('dashboardTotalBalance').textContent = tb.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
             document.getElementById('dashboardActiveInvestments').textContent = stats.activeInvestments || 0;
-            document.getElementById('dashboardPendingRecharges').textContent = pra.toFixed(2);
-            document.getElementById('dashboardPendingWithdrawals').textContent = pwa.toFixed(2);
-            document.getElementById('dashboardTotalCommissions').textContent = tc.toFixed(2);
+            document.getElementById('dashboardPendingRecharges').textContent = pra.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+            document.getElementById('dashboardPendingWithdrawals').textContent = pwa.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+            document.getElementById('dashboardTotalCommissions').textContent = tc.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
             document.getElementById('dashboardTotalUsers').textContent = stats.totalUsers || 0;
 
             document.getElementById('pendingRechargesCount').textContent = stats.pendingRecharges || 0;
             document.getElementById('pendingWithdrawalsCount').textContent = stats.pendingWithdrawals || 0;
-            document.getElementById('todayCommissions').textContent = tdc.toFixed(2);
+            document.getElementById('todayCommissions').textContent = tdc.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
             document.getElementById('newUsersToday').textContent = stats.newUsersToday || 0;
         }
 
@@ -1298,12 +1330,12 @@
                     <tr>
                         <td>${w.userName || 'Usuario'}</td>
                         <td>$${parseFloat(w.amount).toFixed(2)}</td>
-                        <td>${w.bankName || '-'}</td>
+                        <td>${w.bankDisplay || w.bankName || '-'}</td>
                         <td>${w.bankAccount || '-'}</td>
                         <td>${w.accountHolder || '-'}</td>
                         <td>${createdDate.toLocaleDateString('es-ES')}</td>
                         <td>${statusBadge}</td>
-                        <td>${w.status === 'pending' ? `<button class="btn btn-approve" onclick="openWithdrawalModal('${w.id}')">Procesar</button>` : '-'}</td>
+                        <td>${w.status === 'pending' ? `<button class="btn btn-approve" onclick="openWithdrawalModal(${w.id})">Procesar</button>` : '-'}</td>
                     </tr>
                 `;
             }).join('');
@@ -1450,13 +1482,14 @@
         }
 
         function openWithdrawalModal(withdrawalId) {
-            const withdrawal = allData.withdrawals.find(w => w.id === withdrawalId);
+            const wId = parseInt(withdrawalId);
+            const withdrawal = allData.withdrawals.find(w => w.id === wId || w.id === withdrawalId);
             if (!withdrawal) return;
 
             currentWithdrawalId = withdrawalId;
             document.getElementById('withdrawalUser').value = withdrawal.userName || 'Usuario';
             document.getElementById('withdrawalAmount').value = '$' + parseFloat(withdrawal.amount).toFixed(2);
-            document.getElementById('withdrawalBank').value = withdrawal.bankName || '-';
+            document.getElementById('withdrawalBank').value = withdrawal.bankDisplay || withdrawal.bankName || '-';
             document.getElementById('withdrawalAccount').value = withdrawal.bankAccount || '-';
             document.getElementById('withdrawalHolder').value = withdrawal.accountHolder || '-';
             document.getElementById('withdrawalNotes').value = '';

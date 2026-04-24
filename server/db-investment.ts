@@ -465,6 +465,13 @@ export async function getAdminStats() {
     const pendingWithdrawals = withdrawals.filter((w) => w.status === "pending");
     const totalCommissions = commissions.reduce((sum, c) => sum + parseFloat(c.amount), 0);
 
+    // Saldo real de la plataforma: recargas aprobadas - retiros aprobados
+    const approvedRecharges = recharges.filter((r) => r.status === "approved");
+    const approvedWithdrawals = withdrawals.filter((w) => w.status === "approved");
+    const totalApprovedRecharges = approvedRecharges.reduce((sum, r) => sum + parseFloat(r.amount), 0);
+    const totalApprovedWithdrawals = approvedWithdrawals.reduce((sum, w) => sum + parseFloat(w.amount), 0);
+    const platformRealBalance = totalApprovedRecharges - totalApprovedWithdrawals;
+
     return {
       totalBalance: totalBalance.toFixed(2),
       activeInvestments,
@@ -478,6 +485,10 @@ export async function getAdminStats() {
         .filter((c) => new Date(c.createdAt).toDateString() === new Date().toDateString())
         .reduce((sum, c) => sum + parseFloat(c.amount), 0)
         .toFixed(2),
+      // Saldo real de plataforma
+      totalApprovedRecharges: totalApprovedRecharges.toFixed(2),
+      totalApprovedWithdrawals: totalApprovedWithdrawals.toFixed(2),
+      platformRealBalance: platformRealBalance.toFixed(2),
     };
   } catch (error) {
     console.error("Error getting admin stats:", error);
@@ -491,6 +502,9 @@ export async function getAdminStats() {
       pendingWithdrawalsAmount: "0",
       totalCommissions: "0",
       todayCommissions: "0",
+      totalApprovedRecharges: "0",
+      totalApprovedWithdrawals: "0",
+      platformRealBalance: "0",
     };
   }
 }

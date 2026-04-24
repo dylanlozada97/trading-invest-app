@@ -77,3 +77,8 @@
 - [x] BUG: No se cuentan los referidos cuando alguien se registra con un código de referido
 - [x] BUG: No se genera comisión automática cuando un referido recarga/invierte
 - [x] Verificar flujo completo: registro con código → conteo de referido → comisión al invertir
+
+## Bugs y Mejoras (Abril 24 - Panel Admin)
+- [x] BUG: Panel admin no tiene botones para aprobar/rechazar retiros
+- [x] Mostrar saldo real de la plataforma: recargas aprobadas - retiros aprobados (flujo de caja real)
+- [x] El saldo debe mostrar: total ingresado, total retirado, saldo disponible real
