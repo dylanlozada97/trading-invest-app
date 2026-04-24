@@ -345,6 +345,19 @@ export async function createWithdrawal(userId: number, data: { amount: string; a
   if (!db) throw new Error("Database not available");
 
   try {
+    // Verify user has enough balance
+    const user = await db.select().from(schema.appUsers).where(eq(schema.appUsers.id, userId)).limit(1);
+    if (user.length === 0) throw new Error("Usuario no encontrado");
+    const currentBalance = parseFloat(user[0].balance);
+    const withdrawAmount = parseFloat(data.amount);
+    if (withdrawAmount <= 0) throw new Error("El monto debe ser mayor a 0");
+    if (currentBalance < withdrawAmount) throw new Error("Saldo insuficiente");
+
+    // Deduct balance immediately (reserve funds)
+    await db.update(schema.appUsers)
+      .set({ balance: (currentBalance - withdrawAmount).toFixed(2) })
+      .where(eq(schema.appUsers.id, userId));
+
     const result = await db.insert(schema.withdrawals).values({
       userId,
       ...data,
@@ -357,9 +370,11 @@ export async function createWithdrawal(userId: number, data: { amount: string; a
       userId,
       type: "withdrawal",
       amount: data.amount,
-      description: `Retiro pendiente: $${data.amount}`,
+      description: `Retiro solicitado: $${data.amount} (saldo descontado)`,
       createdAt: new Date(),
     });
+
+    console.log(`[Withdrawal] User ${userId} requested withdrawal of $${data.amount}. Balance: $${currentBalance} -> $${(currentBalance - withdrawAmount).toFixed(2)}`);
 
     return { success: true, withdrawalId: (result as any).insertId || 0 };
   } catch (error: any) {
@@ -388,8 +403,9 @@ export async function approveWithdrawal(withdrawalId: number) {
   try {
     const withdrawal = await db.select().from(schema.withdrawals).where(eq(schema.withdrawals.id, withdrawalId)).limit(1);
     if (withdrawal.length === 0) throw new Error("Retiro no encontrado");
+    if (withdrawal[0].status !== "pending") throw new Error("Este retiro ya fue procesado");
 
-    // Update withdrawal
+    // Update withdrawal status to approved
     await db.update(schema.withdrawals).set({ status: "approved" }).where(eq(schema.withdrawals.id, withdrawalId));
 
     // Record transaction
@@ -397,9 +413,11 @@ export async function approveWithdrawal(withdrawalId: number) {
       userId: withdrawal[0].userId,
       type: "withdrawal",
       amount: withdrawal[0].amount,
-      description: `Retiro aprobado: $${withdrawal[0].amount}`,
+      description: `Retiro aprobado y pagado: $${withdrawal[0].amount}`,
       createdAt: new Date(),
     });
+
+    console.log(`[Withdrawal] Approved withdrawal #${withdrawalId} for $${withdrawal[0].amount}`);
 
     return { success: true };
   } catch (error: any) {
@@ -414,9 +432,31 @@ export async function rejectWithdrawal(withdrawalId: number) {
   try {
     const withdrawal = await db.select().from(schema.withdrawals).where(eq(schema.withdrawals.id, withdrawalId)).limit(1);
     if (withdrawal.length === 0) throw new Error("Retiro no encontrado");
+    if (withdrawal[0].status !== "pending") throw new Error("Este retiro ya fue procesado");
 
-    // Update withdrawal
+    // Update withdrawal status to rejected
     await db.update(schema.withdrawals).set({ status: "rejected" }).where(eq(schema.withdrawals.id, withdrawalId));
+
+    // Refund the balance back to the user
+    const user = await db.select().from(schema.appUsers).where(eq(schema.appUsers.id, withdrawal[0].userId)).limit(1);
+    if (user.length > 0) {
+      const currentBalance = parseFloat(user[0].balance);
+      const refundAmount = parseFloat(withdrawal[0].amount);
+      await db.update(schema.appUsers)
+        .set({ balance: (currentBalance + refundAmount).toFixed(2) })
+        .where(eq(schema.appUsers.id, withdrawal[0].userId));
+
+      // Record refund transaction
+      await db.insert(schema.transactions).values({
+        userId: withdrawal[0].userId,
+        type: "withdrawal",
+        amount: withdrawal[0].amount,
+        description: `Retiro rechazado: $${withdrawal[0].amount} (saldo devuelto)`,
+        createdAt: new Date(),
+      });
+
+      console.log(`[Withdrawal] Rejected withdrawal #${withdrawalId}. Refunded $${withdrawal[0].amount} to user ${withdrawal[0].userId}`);
+    }
 
     return { success: true };
   } catch (error: any) {

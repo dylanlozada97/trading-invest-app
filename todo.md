@@ -82,3 +82,6 @@
 - [x] BUG: Panel admin no tiene botones para aprobar/rechazar retiros
 - [x] Mostrar saldo real de la plataforma: recargas aprobadas - retiros aprobados (flujo de caja real)
 - [x] El saldo debe mostrar: total ingresado, total retirado, saldo disponible real
+
+## Bugs (Abril 24 - Retiros)
+- [x] BUG: Los retiros no se están aprobando desde el panel admin

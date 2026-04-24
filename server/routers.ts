@@ -98,16 +98,16 @@ export const appRouter = router({
     commissions: publicProcedure.query(async () => dbInv.getAllCommissions()),
     transactions: publicProcedure.query(async () => dbInv.getAllTransactions()),
     approveRecharge: publicProcedure
-      .input(z.object({ id: z.number() }))
+      .input(z.object({ id: z.number(), notes: z.string().optional() }))
       .mutation(async ({ input }) => dbInv.approveRecharge(input.id)),
     rejectRecharge: publicProcedure
-      .input(z.object({ id: z.number() }))
+      .input(z.object({ id: z.number(), notes: z.string().optional() }))
       .mutation(async ({ input }) => dbInv.rejectRecharge(input.id)),
     approveWithdrawal: publicProcedure
-      .input(z.object({ id: z.number() }))
+      .input(z.object({ id: z.number(), notes: z.string().optional() }))
       .mutation(async ({ input }) => dbInv.approveWithdrawal(input.id)),
     rejectWithdrawal: publicProcedure
-      .input(z.object({ id: z.number() }))
+      .input(z.object({ id: z.number(), notes: z.string().optional() }))
       .mutation(async ({ input }) => dbInv.rejectWithdrawal(input.id)),
     resetAllData: publicProcedure
       .mutation(async () => dbInv.resetAllData()),
