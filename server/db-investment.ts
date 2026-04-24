@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/mysql2";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import * as schema from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -32,6 +32,21 @@ export async function createAppUser(data: { username: string; email: string; ref
     // Get the inserted user to retrieve the actual ID
     const users = await db.select().from(schema.appUsers).where(eq(schema.appUsers.username, data.username)).limit(1);
     const userId = users.length > 0 ? users[0].id : 0;
+
+    // If user was referred by someone, increment the referrer's totalReferrals count
+    if (data.referredBy && data.referredBy.trim() !== "") {
+      const referrer = await db.select().from(schema.appUsers)
+        .where(eq(schema.appUsers.referralCode, data.referredBy.trim()))
+        .limit(1);
+      if (referrer.length > 0) {
+        await db.update(schema.appUsers)
+          .set({ totalReferrals: sql`${schema.appUsers.totalReferrals} + 1` })
+          .where(eq(schema.appUsers.id, referrer[0].id));
+        console.log(`[Referral] User ${data.username} referred by ${referrer[0].username} (code: ${data.referredBy}). Referrer now has ${referrer[0].totalReferrals + 1} referrals.`);
+      } else {
+        console.log(`[Referral] Referral code ${data.referredBy} not found - no referrer credited.`);
+      }
+    }
 
     return { success: true, userId };
   } catch (error: any) {
@@ -106,6 +121,60 @@ export async function createInvestment(userId: number, amount: string) {
       description: `Inversión de $${amount}`,
       createdAt: new Date(),
     });
+
+    // Generate referral commission if this user was referred by someone
+    try {
+      const investor = users[0];
+      if (investor.referredBy && investor.referredBy.trim() !== "") {
+        // Find the referrer by their referral code
+        const referrer = await db.select().from(schema.appUsers)
+          .where(eq(schema.appUsers.referralCode, investor.referredBy.trim()))
+          .limit(1);
+        if (referrer.length > 0) {
+          // Calculate commission based on referrer's level
+          const referrerTotalReferrals = referrer[0].totalReferrals;
+          let commissionPct = 5; // Default: Bronce
+          if (referrerTotalReferrals >= 25) commissionPct = 30; // Diamond
+          else if (referrerTotalReferrals >= 20) commissionPct = 25; // Platinum
+          else if (referrerTotalReferrals >= 15) commissionPct = 20; // Gold
+          else if (referrerTotalReferrals >= 10) commissionPct = 15; // Silver
+          else if (referrerTotalReferrals >= 5) commissionPct = 10; // Bronze
+
+          const commissionAmount = (investAmount * commissionPct / 100).toString();
+
+          // Create commission record
+          await db.insert(schema.commissions).values({
+            referrerId: referrer[0].id,
+            refereeId: userId,
+            amount: commissionAmount,
+            percentage: commissionPct,
+            status: "credited",
+            createdAt: new Date(),
+          });
+
+          // Credit commission to referrer's balance
+          const referrerBalance = parseFloat(referrer[0].balance);
+          const newReferrerBalance = (referrerBalance + parseFloat(commissionAmount)).toString();
+          await db.update(schema.appUsers)
+            .set({ balance: newReferrerBalance })
+            .where(eq(schema.appUsers.id, referrer[0].id));
+
+          // Record commission transaction
+          await db.insert(schema.transactions).values({
+            userId: referrer[0].id,
+            type: "commission",
+            amount: commissionAmount,
+            description: `Comisión ${commissionPct}% por inversión de referido (${investor.username}): $${commissionAmount}`,
+            createdAt: new Date(),
+          });
+
+          console.log(`[Commission] ${referrer[0].username} earned $${commissionAmount} (${commissionPct}%) from ${investor.username}'s investment of $${amount}`);
+        }
+      }
+    } catch (commError) {
+      console.error('[Commission] Error generating commission:', commError);
+      // Don't fail the investment if commission generation fails
+    }
 
     return { success: true, investmentId: (result as any).insertId || 0, newBalance };
   } catch (error: any) {

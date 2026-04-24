@@ -72,3 +72,8 @@
 - [x] Rediseñar pantallas de recarga, inversión y retiro
 - [x] Rediseñar perfil y referidos
 - [x] Asegurar consistencia visual en toda la app (temática roja/dorada china)
+
+## Bugs Reportados (Abril 24 - Referidos)
+- [x] BUG: No se cuentan los referidos cuando alguien se registra con un código de referido
+- [x] BUG: No se genera comisión automática cuando un referido recarga/invierte
+- [x] Verificar flujo completo: registro con código → conteo de referido → comisión al invertir
