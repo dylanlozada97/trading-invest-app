@@ -146,11 +146,18 @@ function InvestmentCard({ inv, onClaim }: { inv: any; onClaim: (id: number) => v
         </View>
       </ScrollView>
 
-      {/* Botón reclamar si está completo */}
+      {/* Botón reclamar si está completo y aún activo */}
       {isCompleted && inv.status === "active" && (
         <TouchableOpacity style={s.claimBtn} onPress={() => onClaim(inv.id)} activeOpacity={0.8}>
           <Text style={s.claimBtnText}>🎉 Reclamar ${totalReturn.toLocaleString("es-CO")}</Text>
         </TouchableOpacity>
+      )}
+
+      {/* Mensaje si fue pagada automáticamente */}
+      {inv.status === "completed" && (
+        <View style={s.autoPaidBanner}>
+          <Text style={s.autoPaidText}>✅ Pagada automáticamente: ${totalReturn.toLocaleString("es-CO")} acreditados a tu saldo</Text>
+        </View>
       )}
     </View>
   );
@@ -269,7 +276,7 @@ export default function InvestmentsScreen() {
             {investments.length === 0 ? "Sin inversiones activas" : `${investments.filter(i => i.status === "active").length} inversión(es) activa(s)`}
           </Text>
 
-          {investments.length === 0 ? (
+          {investments.filter(inv => inv.status === "active").length === 0 && investments.length === 0 ? (
             <View style={s.emptyCard}>
               <Text style={s.emptyIcon}>📈</Text>
               <Text style={s.emptyText}>No tienes inversiones activas</Text>
@@ -283,10 +290,41 @@ export default function InvestmentsScreen() {
               ))
           )}
 
-          {/* Inversiones reclamadas */}
+          {/* Inversiones completadas (pagadas automáticamente) */}
+          {investments.filter(inv => inv.status === "completed").length > 0 && (
+            <>
+              <Text style={[s.sectionTitle, { marginTop: 20 }]}>✅ Completadas (Pago Automático)</Text>
+              {investments
+                .filter(inv => inv.status === "completed")
+                .map((inv: any) => {
+                  const amt = parseFloat(inv.amount);
+                  const gain = amt * 0.6;
+                  const total = amt + gain;
+                  return (
+                    <View key={inv.id} style={s.completedCard}>
+                      <View style={s.completedHeader}>
+                        <View>
+                          <Text style={s.completedAmount}>${amt.toLocaleString("es-CO")}</Text>
+                          <Text style={s.completedDate}>{getPaymentDate(inv.createdAt)}</Text>
+                        </View>
+                        <View style={s.completedBadge}>
+                          <Text style={s.completedBadgeText}>Pagada</Text>
+                        </View>
+                      </View>
+                      <View style={s.completedDetails}>
+                        <Text style={s.completedGain}>+${gain.toLocaleString("es-CO")} ganancia</Text>
+                        <Text style={s.completedTotal}>Total: ${total.toLocaleString("es-CO")}</Text>
+                      </View>
+                    </View>
+                  );
+                })}
+            </>
+          )}
+
+          {/* Inversiones reclamadas manualmente */}
           {investments.filter(inv => inv.status === "claimed").length > 0 && (
             <>
-              <Text style={[s.sectionTitle, { marginTop: 20 }]}>Historial</Text>
+              <Text style={[s.sectionTitle, { marginTop: 20 }]}>Reclamadas</Text>
               {investments
                 .filter(inv => inv.status === "claimed")
                 .map((inv: any) => (
@@ -356,4 +394,19 @@ const s = StyleSheet.create({
   claimedAmount: { fontSize: 15, fontWeight: "bold", color: "#9BA1A6" },
   claimedGain: { fontSize: 13, color: "#4ADE80" },
   claimedDate: { fontSize: 12, color: "#687076" },
+
+  // Auto-paid banner
+  autoPaidBanner: { backgroundColor: "#4ADE8015", borderRadius: 10, padding: 12, marginTop: 8, borderWidth: 1, borderColor: "#4ADE8040" },
+  autoPaidText: { color: "#4ADE80", fontSize: 13, fontWeight: "600", textAlign: "center" },
+
+  // Completed cards
+  completedCard: { backgroundColor: "#16213e", borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: "#4ADE8040" },
+  completedHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
+  completedAmount: { fontSize: 18, fontWeight: "bold", color: "#ECEDEE" },
+  completedDate: { fontSize: 12, color: "#9BA1A6", marginTop: 2 },
+  completedBadge: { backgroundColor: "#4ADE8020", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  completedBadgeText: { color: "#4ADE80", fontSize: 12, fontWeight: "700" },
+  completedDetails: { flexDirection: "row", justifyContent: "space-between", paddingTop: 8, borderTopWidth: 1, borderTopColor: "#1e2d4a" },
+  completedGain: { fontSize: 14, color: "#4ADE80", fontWeight: "600" },
+  completedTotal: { fontSize: 14, color: "#fbbf24", fontWeight: "600" },
 });

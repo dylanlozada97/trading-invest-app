@@ -92,3 +92,10 @@
 ## Mejoras (Abril 24 - Historial Retiros)
 - [x] Mostrar al usuario el historial de retiros con estado (pendiente, aprobado, rechazado)
 - [x] Mostrar notificación visual del estado de cada retiro
+
+## Mejoras (Abril 24 - Pago Automático)
+- [x] Implementar pago automático de inversiones vencidas (15 días)
+- [x] Acreditar capital + ganancia (60%) al saldo del usuario automáticamente
+- [x] Marcar inversión como completada al pagar
+- [x] Mostrar estado "Completada" en la UI de inversiones
+- [x] Job periódico que revise inversiones vencidas cada hora

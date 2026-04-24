@@ -109,6 +109,8 @@ export const appRouter = router({
     rejectWithdrawal: publicProcedure
       .input(z.object({ id: z.number(), notes: z.string().optional() }))
       .mutation(async ({ input }) => dbInv.rejectWithdrawal(input.id)),
+    processMaturedInvestments: publicProcedure
+      .mutation(async () => dbInv.processMaturedInvestments()),
     resetAllData: publicProcedure
       .mutation(async () => dbInv.resetAllData()),
   }),

@@ -549,6 +549,72 @@ export async function getAdminStats() {
   }
 }
 
+// AUTO-PAY MATURED INVESTMENTS
+export async function processMaturedInvestments() {
+  const db = await getDb();
+  if (!db) {
+    console.log('[AutoPay] Database not available, skipping.');
+    return { processed: 0 };
+  }
+
+  try {
+    // Get all active investments
+    const activeInvestments = await db.select().from(schema.investments)
+      .where(eq(schema.investments.status, "active"));
+
+    const now = new Date();
+    let processed = 0;
+
+    for (const inv of activeInvestments) {
+      const createdAt = new Date(inv.createdAt);
+      const daysPassed = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+
+      if (daysPassed >= 15) {
+        const capital = parseFloat(inv.amount);
+        const gain = capital * 0.6;
+        const totalPayout = capital + gain;
+
+        // Mark investment as completed
+        await db.update(schema.investments)
+          .set({ status: "completed" })
+          .where(eq(schema.investments.id, inv.id));
+
+        // Credit capital + gain to user balance
+        const user = await db.select().from(schema.appUsers)
+          .where(eq(schema.appUsers.id, inv.userId)).limit(1);
+        if (user.length > 0) {
+          const newBalance = (parseFloat(user[0].balance) + totalPayout).toString();
+          await db.update(schema.appUsers)
+            .set({ balance: newBalance })
+            .where(eq(schema.appUsers.id, inv.userId));
+
+          // Record transaction
+          await db.insert(schema.transactions).values({
+            userId: inv.userId,
+            type: "investment",
+            amount: totalPayout.toString(),
+            description: `Inversión completada: Capital $${capital.toLocaleString('es-CO')} + Ganancia $${gain.toLocaleString('es-CO')} = $${totalPayout.toLocaleString('es-CO')}`,
+            createdAt: new Date(),
+          });
+
+          console.log(`[AutoPay] Investment #${inv.id} matured. Paid $${totalPayout.toLocaleString('es-CO')} to user ${user[0].username} (ID: ${inv.userId})`);
+        }
+
+        processed++;
+      }
+    }
+
+    if (processed > 0) {
+      console.log(`[AutoPay] Processed ${processed} matured investments.`);
+    }
+
+    return { processed };
+  } catch (error) {
+    console.error('[AutoPay] Error processing matured investments:', error);
+    return { processed: 0 };
+  }
+}
+
 // RESET ALL DATA (for testing - clears recharges, transactions, investments, withdrawals, commissions and resets balances)
 export async function resetAllData() {
   const db = await getDb();

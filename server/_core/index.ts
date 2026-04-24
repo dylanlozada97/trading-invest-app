@@ -7,6 +7,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
+import { processMaturedInvestments } from "../db-investment";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -82,6 +83,23 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`[api] server listening on port ${port}`);
+
+    // Run auto-pay check on startup
+    processMaturedInvestments().then((result) => {
+      console.log(`[AutoPay] Startup check: ${result.processed} matured investments processed.`);
+    });
+
+    // Run auto-pay check every hour (3600000 ms)
+    setInterval(async () => {
+      try {
+        const result = await processMaturedInvestments();
+        if (result.processed > 0) {
+          console.log(`[AutoPay] Periodic check: ${result.processed} matured investments processed.`);
+        }
+      } catch (err) {
+        console.error('[AutoPay] Periodic check error:', err);
+      }
+    }, 3600000);
   });
 }
 
