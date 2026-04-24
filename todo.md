@@ -60,3 +60,8 @@
 
 ## Bugs Reportados (Abril 21 - Ronda 3)
 - [x] BUG: El login no deja ingresar con usuarios registrados
+
+## Bugs Reportados (Abril 24 - Antes de Publicar)
+- [x] BUG: La contraseña no se guarda correctamente en AsyncStorage después del registro
+- [x] BUG: El login falla después del registro (posiblemente por cambio de links)
+- [x] Auditar y arreglar todos los errores del flujo de registro y login
