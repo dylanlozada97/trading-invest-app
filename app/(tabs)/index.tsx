@@ -5,7 +5,7 @@ import { loadUser, AppUser, syncUserFromServer } from "@/lib/auth-store";
 import { useRouter } from "expo-router";
 import { trpc } from "@/lib/trpc";
 
-const DAILY_RATE = 0.04; // 4% diario = 60% en 15 días
+const DAILY_RATE = 0.04;
 const TOTAL_DAYS = 15;
 
 function getDaysPassed(createdAt: string): number {
@@ -33,9 +33,7 @@ export default function HomeScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useEffect(() => { loadData(); }, [loadData]);
 
   const investmentsQuery = trpc.investment.getInvestments.useQuery(
     { userId: user?.id ?? 0 },
@@ -54,7 +52,6 @@ export default function HomeScreen() {
   const baseBalance = parseFloat(user.balance);
   const activeInvestments = (investmentsQuery.data || []).filter((inv: any) => inv.status === "active");
 
-  // Calcular valor actual de inversiones activas (capital + ganancias diarias acumuladas)
   const activeInvestmentsValue = activeInvestments.reduce((sum: number, inv: any) => {
     const amount = parseFloat(inv.amount);
     const daysPassed = getDaysPassed(inv.createdAt);
@@ -68,34 +65,53 @@ export default function HomeScreen() {
     return sum + (getCurrentValue(amount, daysPassed) - amount);
   }, 0);
 
+  const actions = [
+    { icon: "💳", label: "Recargar", route: "/recharge", color: "#DC2626" },
+    { icon: "📈", label: "Invertir", route: "/invest", color: "#fbbf24" },
+    { icon: "🏦", label: "Retirar", route: "/withdraw", color: "#4ADE80" },
+    { icon: "🎁", label: "Referidos", route: "/referrals", color: "#60A5FA" },
+  ];
+
   return (
     <ScreenContainer>
       <ScrollView
         contentContainerStyle={{ paddingBottom: 100 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#DC2626" />}
       >
-        {/* Header con saldo total */}
+        {/* Header con gradiente rojo */}
         <View style={s.header}>
-          <Text style={s.greeting}>Hola, {user.username} 👋</Text>
-          <Text style={s.balanceLabel}>Capital Total</Text>
-          <Text style={s.balanceAmount}>${totalCapital.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</Text>
-          {totalGainsToDate > 0 && (
-            <View style={s.gainsBadge}>
-              <Text style={s.gainsBadgeText}>+${totalGainsToDate.toLocaleString("es-CO", { maximumFractionDigits: 0 })} en ganancias hoy</Text>
+          <View style={s.headerTop}>
+            <View>
+              <Text style={s.greeting}>Hola, {user.username}</Text>
+              <Text style={s.greetingSub}>Bienvenido de vuelta</Text>
             </View>
-          )}
+            <View style={s.avatarCircle}>
+              <Text style={s.avatarText}>{user.username.charAt(0).toUpperCase()}</Text>
+            </View>
+          </View>
+
+          <View style={s.balanceCard}>
+            <Text style={s.balanceLabel}>CAPITAL TOTAL</Text>
+            <Text style={s.balanceAmount}>${totalCapital.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</Text>
+            {totalGainsToDate > 0 && (
+              <View style={s.gainsBadge}>
+                <Text style={s.gainsBadgeText}>+${totalGainsToDate.toLocaleString("es-CO", { maximumFractionDigits: 0 })} ganancias acumuladas</Text>
+              </View>
+            )}
+          </View>
         </View>
 
-        {/* Desglose de saldo */}
+        {/* Desglose */}
         {activeInvestmentsValue > 0 && (
-          <View style={s.balanceBreakdown}>
-            <View style={s.breakdownItem}>
-              <Text style={s.breakdownLabel}>💰 Saldo libre</Text>
+          <View style={s.breakdownRow}>
+            <View style={s.breakdownCard}>
+              <Text style={s.breakdownIcon}>💰</Text>
+              <Text style={s.breakdownLabel}>Saldo Libre</Text>
               <Text style={s.breakdownValue}>${baseBalance.toLocaleString("es-CO")}</Text>
             </View>
-            <View style={s.breakdownDivider} />
-            <View style={s.breakdownItem}>
-              <Text style={s.breakdownLabel}>📈 En inversiones</Text>
+            <View style={[s.breakdownCard, { borderColor: "#4ADE8030" }]}>
+              <Text style={s.breakdownIcon}>📈</Text>
+              <Text style={s.breakdownLabel}>En Inversiones</Text>
               <Text style={[s.breakdownValue, { color: "#4ADE80" }]}>
                 ${activeInvestmentsValue.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
               </Text>
@@ -104,26 +120,26 @@ export default function HomeScreen() {
         )}
 
         {/* Quick Actions */}
-        <View style={s.actionsRow}>
-          <TouchableOpacity onPress={() => router.push("/recharge" as any)} style={s.actionBtn} activeOpacity={0.7}>
-            <Text style={s.actionIcon}>💳</Text>
-            <Text style={s.actionText}>Recargar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push("/invest" as any)} style={s.actionBtn} activeOpacity={0.7}>
-            <Text style={s.actionIcon}>📈</Text>
-            <Text style={s.actionText}>Invertir</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push("/withdraw" as any)} style={s.actionBtn} activeOpacity={0.7}>
-            <Text style={s.actionIcon}>🏦</Text>
-            <Text style={s.actionText}>Retirar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push("/referrals" as any)} style={s.actionBtn} activeOpacity={0.7}>
-            <Text style={s.actionIcon}>🎁</Text>
-            <Text style={s.actionText}>Referidos</Text>
-          </TouchableOpacity>
+        <View style={s.actionsContainer}>
+          <Text style={s.sectionTitle}>Acciones Rápidas</Text>
+          <View style={s.actionsRow}>
+            {actions.map((a) => (
+              <TouchableOpacity
+                key={a.label}
+                onPress={() => router.push(a.route as any)}
+                style={s.actionBtn}
+                activeOpacity={0.7}
+              >
+                <View style={[s.actionIconBg, { backgroundColor: a.color + "18" }]}>
+                  <Text style={s.actionIcon}>{a.icon}</Text>
+                </View>
+                <Text style={s.actionText}>{a.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
-        {/* Inversiones activas en home */}
+        {/* Inversiones activas */}
         {activeInvestments.length > 0 && (
           <View style={s.section}>
             <Text style={s.sectionTitle}>Inversiones Activas</Text>
@@ -136,27 +152,33 @@ export default function HomeScreen() {
               return (
                 <TouchableOpacity
                   key={inv.id}
-                  style={s.activeInvCard}
+                  style={s.invCard}
                   onPress={() => router.push("/(tabs)/investments" as any)}
                   activeOpacity={0.8}
                 >
-                  <View style={s.activeInvHeader}>
-                    <Text style={s.activeInvAmount}>${amount.toLocaleString("es-CO")}</Text>
-                    <Text style={s.activeInvDay}>Día {daysPassed}/{TOTAL_DAYS}</Text>
+                  <View style={s.invHeader}>
+                    <View>
+                      <Text style={s.invAmountLabel}>Inversión</Text>
+                      <Text style={s.invAmount}>${amount.toLocaleString("es-CO")}</Text>
+                    </View>
+                    <View style={s.invDayBadge}>
+                      <Text style={s.invDayText}>Día {daysPassed}/{TOTAL_DAYS}</Text>
+                    </View>
                   </View>
-                  {/* Mini barra de progreso */}
-                  <View style={s.miniProgressBg}>
-                    <View style={[s.miniProgressBar, { width: `${progress}%` as any }]} />
+                  <View style={s.progressBg}>
+                    <View style={[s.progressBar, { width: `${Math.max(progress, 3)}%` as any }]} />
                   </View>
-                  <View style={s.activeInvFooter}>
-                    <Text style={s.activeInvCurrent}>
-                      Hoy: <Text style={{ color: "#4ADE80", fontWeight: "bold" }}>
-                        ${currentValue.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
+                  <View style={s.invFooter}>
+                    <View>
+                      <Text style={s.invFooterLabel}>Valor Actual</Text>
+                      <Text style={s.invFooterValue}>${currentValue.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</Text>
+                    </View>
+                    <View style={{ alignItems: "flex-end" }}>
+                      <Text style={s.invFooterLabel}>{daysLeft === 0 ? "Estado" : "Restante"}</Text>
+                      <Text style={[s.invFooterValue, daysLeft === 0 && { color: "#fbbf24" }]}>
+                        {daysLeft === 0 ? "Listo" : `${daysLeft} días`}
                       </Text>
-                    </Text>
-                    <Text style={s.activeInvDaysLeft}>
-                      {daysLeft === 0 ? "¡Listo para reclamar! 🎉" : `${daysLeft} días restantes`}
-                    </Text>
+                    </View>
                   </View>
                 </TouchableOpacity>
               );
@@ -164,65 +186,43 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Info Cards */}
+        {/* Info */}
         <View style={s.section}>
           <Text style={s.sectionTitle}>Información</Text>
           <View style={s.infoCard}>
-            <View style={s.infoRow}>
-              <Text style={s.infoLabel}>Rendimiento</Text>
-              <Text style={s.infoValue}>60% en 15 días</Text>
-            </View>
-            <View style={s.infoRow}>
-              <Text style={s.infoLabel}>Ganancia diaria</Text>
-              <Text style={s.infoValue}>4% por día</Text>
-            </View>
-            <View style={s.infoRow}>
-              <Text style={s.infoLabel}>Inversión Mínima</Text>
-              <Text style={s.infoValue}>$50.000</Text>
-            </View>
-            <View style={s.infoRow}>
-              <Text style={s.infoLabel}>Código de Referido</Text>
-              <Text style={[s.infoValue, { color: "#DC2626" }]}>{user.referralCode}</Text>
-            </View>
-            <View style={[s.infoRow, { borderBottomWidth: 0 }]}>
-              <Text style={s.infoLabel}>Referidos Totales</Text>
-              <Text style={s.infoValue}>{user.totalReferrals}</Text>
-            </View>
+            {[
+              { label: "Rendimiento", value: "60% en 15 días", color: "#4ADE80" },
+              { label: "Ganancia diaria", value: "4% por día", color: "#fbbf24" },
+              { label: "Inversión Mínima", value: "$50.000", color: "#ECEDEE" },
+              { label: "Tu Código", value: user.referralCode, color: "#DC2626" },
+              { label: "Referidos", value: `${user.totalReferrals}`, color: "#60A5FA" },
+            ].map((item, i, arr) => (
+              <View key={item.label} style={[s.infoRow, i === arr.length - 1 && { borderBottomWidth: 0 }]}>
+                <Text style={s.infoLabel}>{item.label}</Text>
+                <Text style={[s.infoValue, { color: item.color }]}>{item.value}</Text>
+              </View>
+            ))}
           </View>
         </View>
 
         {/* How it works */}
         <View style={s.section}>
           <Text style={s.sectionTitle}>¿Cómo Funciona?</Text>
-          <View style={s.stepCard}>
-            <View style={s.step}>
-              <View style={s.stepNum}><Text style={s.stepNumText}>1</Text></View>
-              <View style={s.stepContent}>
-                <Text style={s.stepTitle}>Recarga tu saldo</Text>
-                <Text style={s.stepDesc}>Deposita a nuestra cuenta y sube el comprobante</Text>
+          <View style={s.stepsCard}>
+            {[
+              { num: "1", title: "Recarga tu saldo", desc: "Deposita a nuestra cuenta y sube el comprobante" },
+              { num: "2", title: "Invierte", desc: "Elige el monto a invertir (mínimo $50.000)" },
+              { num: "3", title: "Gana 4% diario", desc: "Tu capital crece cada día hasta completar 60%" },
+              { num: "4", title: "Retira", desc: "Solicita el retiro a tu cuenta bancaria" },
+            ].map((step, i, arr) => (
+              <View key={step.num} style={[s.step, i === arr.length - 1 && { borderBottomWidth: 0 }]}>
+                <View style={s.stepNum}><Text style={s.stepNumText}>{step.num}</Text></View>
+                <View style={s.stepContent}>
+                  <Text style={s.stepTitle}>{step.title}</Text>
+                  <Text style={s.stepDesc}>{step.desc}</Text>
+                </View>
               </View>
-            </View>
-            <View style={s.step}>
-              <View style={s.stepNum}><Text style={s.stepNumText}>2</Text></View>
-              <View style={s.stepContent}>
-                <Text style={s.stepTitle}>Invierte</Text>
-                <Text style={s.stepDesc}>Elige el monto a invertir (mínimo $50.000)</Text>
-              </View>
-            </View>
-            <View style={s.step}>
-              <View style={s.stepNum}><Text style={s.stepNumText}>3</Text></View>
-              <View style={s.stepContent}>
-                <Text style={s.stepTitle}>Gana 4% diario</Text>
-                <Text style={s.stepDesc}>Cada día tu capital crece un 4% hasta completar 60% en 15 días</Text>
-              </View>
-            </View>
-            <View style={[s.step, { borderBottomWidth: 0 }]}>
-              <View style={s.stepNum}><Text style={s.stepNumText}>4</Text></View>
-              <View style={s.stepContent}>
-                <Text style={s.stepTitle}>Retira</Text>
-                <Text style={s.stepDesc}>Solicita el retiro a tu cuenta bancaria</Text>
-              </View>
-            </View>
+            ))}
           </View>
         </View>
       </ScrollView>
@@ -231,41 +231,63 @@ export default function HomeScreen() {
 }
 
 const s = StyleSheet.create({
-  header: { backgroundColor: "#DC2626", padding: 24, paddingTop: 16, paddingBottom: 30, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
-  greeting: { fontSize: 18, color: "#fff", opacity: 0.9, marginBottom: 8 },
-  balanceLabel: { fontSize: 14, color: "#fbbf24", marginBottom: 4 },
-  balanceAmount: { fontSize: 36, fontWeight: "bold", color: "#fff" },
-  gainsBadge: { marginTop: 8, backgroundColor: "#4ADE8030", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, alignSelf: "flex-start" },
-  gainsBadgeText: { fontSize: 13, color: "#4ADE80", fontWeight: "600" },
-  balanceBreakdown: { flexDirection: "row", backgroundColor: "#16213e", marginHorizontal: 16, marginTop: -16, borderRadius: 14, padding: 14, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
-  breakdownItem: { flex: 1, alignItems: "center" },
-  breakdownDivider: { width: 1, backgroundColor: "#334155", marginVertical: 4 },
-  breakdownLabel: { fontSize: 12, color: "#9BA1A6", marginBottom: 4 },
+  // Header
+  header: { backgroundColor: "#DC2626", paddingHorizontal: 20, paddingTop: 12, paddingBottom: 28, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
+  headerTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+  greeting: { fontSize: 20, fontWeight: "bold", color: "#fff" },
+  greetingSub: { fontSize: 13, color: "#ffffff90", marginTop: 2 },
+  avatarCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#ffffff25", alignItems: "center", justifyContent: "center" },
+  avatarText: { fontSize: 18, fontWeight: "bold", color: "#fff" },
+  balanceCard: { backgroundColor: "#b91c1c", borderRadius: 16, padding: 18 },
+  balanceLabel: { fontSize: 11, fontWeight: "700", color: "#fbbf24", letterSpacing: 1.5, marginBottom: 4 },
+  balanceAmount: { fontSize: 34, fontWeight: "bold", color: "#fff" },
+  gainsBadge: { marginTop: 8, backgroundColor: "#4ADE8020", paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, alignSelf: "flex-start" },
+  gainsBadgeText: { fontSize: 12, color: "#4ADE80", fontWeight: "600" },
+
+  // Breakdown
+  breakdownRow: { flexDirection: "row", paddingHorizontal: 16, marginTop: -12, gap: 10 },
+  breakdownCard: { flex: 1, backgroundColor: "#16213e", borderRadius: 14, padding: 14, alignItems: "center", borderWidth: 1, borderColor: "#1e2d4a", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
+  breakdownIcon: { fontSize: 20, marginBottom: 4 },
+  breakdownLabel: { fontSize: 11, color: "#9BA1A6", marginBottom: 4, fontWeight: "500" },
   breakdownValue: { fontSize: 15, fontWeight: "bold", color: "#ECEDEE" },
-  actionsRow: { flexDirection: "row", justifyContent: "space-around", paddingHorizontal: 16, marginTop: 20 },
-  actionBtn: { backgroundColor: "#16213e", borderRadius: 16, padding: 16, alignItems: "center", width: 80, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
-  actionIcon: { fontSize: 28, marginBottom: 6 },
+
+  // Actions
+  actionsContainer: { paddingHorizontal: 20, marginTop: 24 },
+  actionsRow: { flexDirection: "row", justifyContent: "space-between", gap: 10 },
+  actionBtn: { flex: 1, backgroundColor: "#16213e", borderRadius: 14, paddingVertical: 16, alignItems: "center", borderWidth: 1, borderColor: "#1e2d4a" },
+  actionIconBg: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center", marginBottom: 8 },
+  actionIcon: { fontSize: 22 },
   actionText: { fontSize: 11, color: "#ECEDEE", fontWeight: "600" },
+
+  // Section
   section: { paddingHorizontal: 20, marginTop: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: "bold", color: "#ECEDEE", marginBottom: 12 },
-  activeInvCard: { backgroundColor: "#16213e", borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: "#4ADE8040" },
-  activeInvHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
-  activeInvAmount: { fontSize: 16, fontWeight: "bold", color: "#ECEDEE" },
-  activeInvDay: { fontSize: 12, color: "#fbbf24", fontWeight: "600" },
-  miniProgressBg: { height: 6, backgroundColor: "#0a0f1e", borderRadius: 4, overflow: "hidden", marginBottom: 8 },
-  miniProgressBar: { height: "100%", backgroundColor: "#4ADE80", borderRadius: 4 },
-  activeInvFooter: { flexDirection: "row", justifyContent: "space-between" },
-  activeInvCurrent: { fontSize: 13, color: "#9BA1A6" },
-  activeInvDaysLeft: { fontSize: 12, color: "#9BA1A6" },
-  infoCard: { backgroundColor: "#16213e", borderRadius: 16, padding: 16 },
-  infoRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#334155" },
+  sectionTitle: { fontSize: 17, fontWeight: "bold", color: "#ECEDEE", marginBottom: 12, letterSpacing: 0.3 },
+
+  // Investment Card
+  invCard: { backgroundColor: "#16213e", borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: "#1e2d4a" },
+  invHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  invAmountLabel: { fontSize: 11, color: "#9BA1A6", marginBottom: 2 },
+  invAmount: { fontSize: 18, fontWeight: "bold", color: "#ECEDEE" },
+  invDayBadge: { backgroundColor: "#fbbf2418", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  invDayText: { fontSize: 12, color: "#fbbf24", fontWeight: "700" },
+  progressBg: { height: 6, backgroundColor: "#0f1629", borderRadius: 4, overflow: "hidden", marginBottom: 12 },
+  progressBar: { height: "100%", backgroundColor: "#4ADE80", borderRadius: 4 },
+  invFooter: { flexDirection: "row", justifyContent: "space-between" },
+  invFooterLabel: { fontSize: 11, color: "#9BA1A6", marginBottom: 2 },
+  invFooterValue: { fontSize: 14, fontWeight: "bold", color: "#4ADE80" },
+
+  // Info Card
+  infoCard: { backgroundColor: "#16213e", borderRadius: 16, padding: 4, borderWidth: 1, borderColor: "#1e2d4a" },
+  infoRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 13, paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: "#1e2d4a" },
   infoLabel: { fontSize: 14, color: "#9BA1A6" },
-  infoValue: { fontSize: 14, color: "#ECEDEE", fontWeight: "600" },
-  stepCard: { backgroundColor: "#16213e", borderRadius: 16, padding: 16 },
-  step: { flexDirection: "row", alignItems: "flex-start", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#334155" },
+  infoValue: { fontSize: 14, fontWeight: "700" },
+
+  // Steps
+  stepsCard: { backgroundColor: "#16213e", borderRadius: 16, padding: 4, borderWidth: 1, borderColor: "#1e2d4a" },
+  step: { flexDirection: "row", alignItems: "flex-start", paddingVertical: 14, paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: "#1e2d4a" },
   stepNum: { width: 28, height: 28, borderRadius: 14, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center", marginRight: 12, marginTop: 2 },
-  stepNumText: { color: "#fff", fontWeight: "bold", fontSize: 14 },
+  stepNumText: { color: "#fff", fontWeight: "bold", fontSize: 13 },
   stepContent: { flex: 1 },
-  stepTitle: { fontSize: 15, fontWeight: "600", color: "#ECEDEE", marginBottom: 2 },
-  stepDesc: { fontSize: 13, color: "#9BA1A6" },
+  stepTitle: { fontSize: 14, fontWeight: "700", color: "#ECEDEE", marginBottom: 2 },
+  stepDesc: { fontSize: 12, color: "#9BA1A6", lineHeight: 18 },
 });

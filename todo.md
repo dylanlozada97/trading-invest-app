@@ -65,3 +65,10 @@
 - [x] BUG: La contraseña no se guarda correctamente en AsyncStorage después del registro
 - [x] BUG: El login falla después del registro (posiblemente por cambio de links)
 - [x] Auditar y arreglar todos los errores del flujo de registro y login
+
+## Rediseño de Interfaz (Abril 24)
+- [x] Rediseñar pantalla de bienvenida (registro/login) con diseño profesional
+- [x] Rediseñar home screen con diseño moderno y atractivo
+- [x] Rediseñar pantallas de recarga, inversión y retiro
+- [x] Rediseñar perfil y referidos
+- [x] Asegurar consistencia visual en toda la app (temática roja/dorada china)
