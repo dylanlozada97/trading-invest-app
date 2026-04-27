@@ -1745,9 +1745,7 @@
 
         async function loadChatList() {
             try {
-                const res = await fetch('/api/trpc/admin.chatList');
-                const json = await res.json();
-                const chatList = json.result?.data || [];
+                const chatList = await trpcGet('admin.chatList') || [];
                 renderChatList(chatList);
             } catch (e) {
                 console.error('Error loading chat list:', e);
@@ -1800,9 +1798,10 @@
 
         async function loadChatMessages(userId) {
             try {
-                const res = await fetch('/api/trpc/admin.getChatMessages?input=' + encodeURIComponent(JSON.stringify({ userId })));
+                const inputStr = encodeURIComponent(JSON.stringify({ json: { userId } }));
+                const res = await fetch(`${API_BASE_URL}/trpc/admin.getChatMessages?input=${inputStr}`);
                 const json = await res.json();
-                const messages = json.result?.data || [];
+                const messages = json.result?.data?.json || [];
                 renderChatMessages(messages);
             } catch (e) {
                 console.error('Error loading messages:', e);

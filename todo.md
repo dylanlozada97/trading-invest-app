@@ -122,3 +122,6 @@
 - [x] Indicador de mensajes no leídos
 - [x] Botón flotante de chat en el home screen
 - [x] Auto-refresh de mensajes cada 5 segundos
+
+## Bugs (Abril 27 - Chat)
+- [x] BUG: Los mensajes del chat se envían desde la app pero no aparecen en el panel admin (arreglado: formato superjson)
