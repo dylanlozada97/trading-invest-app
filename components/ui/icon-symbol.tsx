@@ -22,6 +22,7 @@ const MAPPING = {
   "dollarsign.circle.fill": "attach-money",
   "arrow.up.circle.fill": "trending-up",
   "giftcard.fill": "card-giftcard",
+  "bubble.left.fill": "chat",
 } as IconMapping;
 
 /**

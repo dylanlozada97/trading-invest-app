@@ -569,6 +569,7 @@
             <button class="nav-tab" onclick="switchTab('users')">👥 Usuarios</button>
             <button class="nav-tab" onclick="switchTab('commissions')">🎁 Comisiones</button>
             <button class="nav-tab" onclick="switchTab('transactions')">📋 Auditoría</button>
+            <button class="nav-tab" onclick="switchTab('chat')">💬 Chat</button>
             <button class="nav-tab" onclick="switchTab('settings')">⚙️ Configuración</button>
         </div>
 
@@ -844,6 +845,37 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Chat Section -->
+        <div id="chat" class="content-section">
+            <div style="display: flex; gap: 20px; height: 70vh;">
+                <!-- Chat List -->
+                <div id="chatListPanel" style="width: 320px; background: rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+                    <div style="padding: 16px; background: rgba(220,38,38,0.2); border-bottom: 1px solid #334155;">
+                        <h2 style="font-size: 18px; display: flex; align-items: center; gap: 8px;">💬 Conversaciones</h2>
+                    </div>
+                    <div id="chatUserList" style="flex: 1; overflow-y: auto; padding: 8px;"></div>
+                </div>
+                <!-- Chat Messages -->
+                <div style="flex: 1; background: rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+                    <div id="chatHeader" style="padding: 16px; background: rgba(220,38,38,0.2); border-bottom: 1px solid #334155;">
+                        <h2 id="chatHeaderTitle" style="font-size: 18px;">💬 Selecciona una conversación</h2>
+                    </div>
+                    <div id="chatMessagesArea" style="flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+                        <div style="text-align: center; color: #687076; padding-top: 100px;">
+                            <p style="font-size: 48px; margin-bottom: 12px;">💬</p>
+                            <p>Selecciona un usuario de la lista para ver sus mensajes</p>
+                        </div>
+                    </div>
+                    <div id="chatInputArea" style="padding: 12px; border-top: 1px solid #334155; display: none;">
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="adminChatInput" placeholder="Escribe una respuesta..." style="flex: 1; background: rgba(255,255,255,0.08); border: 1px solid #334155; border-radius: 20px; padding: 10px 16px; color: #ecf0f1; font-size: 14px; outline: none;" onkeypress="if(event.key==='Enter')sendAdminMessage()">
+                            <button onclick="sendAdminMessage()" style="background: #dc2626; border: none; color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold;">➤ Enviar</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1636,6 +1668,14 @@
 
             document.getElementById(tabName).classList.add('active');
             event.target.classList.add('active');
+
+            // Chat tab handling
+            if (tabName === 'chat') {
+                loadChatList();
+                startChatRefresh();
+            } else {
+                if (chatRefreshInterval) clearInterval(chatRefreshInterval);
+            }
         }
 
         function filterInvestments(status) {
@@ -1698,6 +1738,118 @@
             document.getElementById('commissionSearch')?.addEventListener('input', renderCommissionsTable);
             document.getElementById('transactionSearch')?.addEventListener('input', renderTransactionsTable);
         });
+
+        // ===== CHAT FUNCTIONS =====
+        let currentChatUserId = null;
+        let chatRefreshInterval = null;
+
+        async function loadChatList() {
+            try {
+                const res = await fetch('/api/trpc/admin.chatList');
+                const json = await res.json();
+                const chatList = json.result?.data || [];
+                renderChatList(chatList);
+            } catch (e) {
+                console.error('Error loading chat list:', e);
+            }
+        }
+
+        function renderChatList(chatList) {
+            const container = document.getElementById('chatUserList');
+            if (chatList.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#687076;padding:40px 16px;"><p>No hay conversaciones a\u00fan</p></div>';
+                return;
+            }
+            container.innerHTML = chatList.map(chat => {
+                const isActive = chat.userId === currentChatUserId;
+                const truncMsg = chat.lastMessage.length > 40 ? chat.lastMessage.substring(0, 40) + '...' : chat.lastMessage;
+                const timeAgo = getTimeAgo(chat.lastMessageAt);
+                return `<div onclick="openChat(${chat.userId}, '${chat.username}')" style="padding:12px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:${isActive ? 'rgba(220,38,38,0.2)' : 'rgba(255,255,255,0.03)'};border:1px solid ${isActive ? '#dc2626' : 'transparent'};transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='${isActive ? 'rgba(220,38,38,0.2)' : 'rgba(255,255,255,0.03)'}';">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                        <span style="font-weight:bold;color:#ecf0f1;">\ud83d\udc64 ${chat.username}</span>
+                        ${chat.unreadCount > 0 ? `<span style="background:#dc2626;color:white;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:bold;">${chat.unreadCount}</span>` : ''}
+                    </div>
+                    <div style="font-size:12px;color:#9BA1A6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${truncMsg}</div>
+                    <div style="font-size:11px;color:#687076;margin-top:4px;">${timeAgo}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function getTimeAgo(dateStr) {
+            const d = new Date(dateStr);
+            const now = new Date();
+            const diff = (now - d) / 1000;
+            if (diff < 60) return 'Ahora';
+            if (diff < 3600) return Math.floor(diff / 60) + ' min';
+            if (diff < 86400) return Math.floor(diff / 3600) + ' h';
+            return Math.floor(diff / 86400) + ' d';
+        }
+
+        async function openChat(userId, username) {
+            currentChatUserId = userId;
+            document.getElementById('chatHeaderTitle').textContent = '\ud83d\udcac Chat con ' + username;
+            document.getElementById('chatInputArea').style.display = 'block';
+            document.getElementById('adminChatInput').focus();
+            await loadChatMessages(userId);
+            // Mark as read
+            try {
+                await trpcPost('admin.markChatRead', { userId });
+                loadChatList();
+            } catch (e) {}
+        }
+
+        async function loadChatMessages(userId) {
+            try {
+                const res = await fetch('/api/trpc/admin.getChatMessages?input=' + encodeURIComponent(JSON.stringify({ userId })));
+                const json = await res.json();
+                const messages = json.result?.data || [];
+                renderChatMessages(messages);
+            } catch (e) {
+                console.error('Error loading messages:', e);
+            }
+        }
+
+        function renderChatMessages(messages) {
+            const container = document.getElementById('chatMessagesArea');
+            if (messages.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#687076;padding-top:100px;"><p style="font-size:48px;margin-bottom:12px;">\ud83d\udcac</p><p>No hay mensajes a\u00fan</p></div>';
+                return;
+            }
+            container.innerHTML = messages.map(msg => {
+                const isAdmin = msg.senderType === 'admin';
+                const time = new Date(msg.createdAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+                return `<div style="display:flex;justify-content:${isAdmin ? 'flex-end' : 'flex-start'};">
+                    <div style="max-width:70%;padding:10px 14px;border-radius:16px;${isAdmin ? 'border-bottom-right-radius:4px;background:#dc2626;' : 'border-bottom-left-radius:4px;background:rgba(255,255,255,0.1);'}">
+                        <div style="font-size:14px;color:${isAdmin ? '#fff' : '#ecf0f1'};line-height:1.4;">${msg.message}</div>
+                        <div style="font-size:11px;color:${isAdmin ? 'rgba(255,255,255,0.6)' : '#687076'};margin-top:4px;text-align:${isAdmin ? 'right' : 'left'};">${time}${isAdmin ? (msg.isRead ? ' \u2713\u2713' : ' \u2713') : ''}</div>
+                    </div>
+                </div>`;
+            }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function sendAdminMessage() {
+            const input = document.getElementById('adminChatInput');
+            const message = input.value.trim();
+            if (!message || !currentChatUserId) return;
+            input.value = '';
+            try {
+                await trpcPost('admin.sendChatMessage', { userId: currentChatUserId, message });
+                await loadChatMessages(currentChatUserId);
+                loadChatList();
+            } catch (e) {
+                showAlert('Error al enviar mensaje', 'error');
+            }
+        }
+
+        // Auto-refresh chat
+        function startChatRefresh() {
+            if (chatRefreshInterval) clearInterval(chatRefreshInterval);
+            chatRefreshInterval = setInterval(() => {
+                loadChatList();
+                if (currentChatUserId) loadChatMessages(currentChatUserId);
+            }, 5000);
+        }
 
         // Close modals on outside click
         window.addEventListener('click', (e) => {

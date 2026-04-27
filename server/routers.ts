@@ -86,6 +86,20 @@ export const appRouter = router({
     getCommissions: publicProcedure
       .input(z.object({ userId: z.number() }))
       .query(async ({ input }) => dbInv.getCommissions(input.userId)),
+
+    // Chat
+    sendChatMessage: publicProcedure
+      .input(z.object({ userId: z.number(), message: z.string() }))
+      .mutation(async ({ input }) => dbInv.sendChatMessage(input.userId, "user", input.message)),
+    getChatMessages: publicProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => dbInv.getChatMessages(input.userId)),
+    markChatRead: publicProcedure
+      .input(z.object({ userId: z.number() }))
+      .mutation(async ({ input }) => dbInv.markMessagesAsRead(input.userId, "user")),
+    getUnreadCount: publicProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => dbInv.getUnreadCountForUser(input.userId)),
   }),
 
   // Admin Routes
@@ -116,6 +130,17 @@ export const appRouter = router({
       .mutation(async ({ input }) => dbInv.simulateTimePassed(input.days ?? 15)),
     resetAllData: publicProcedure
       .mutation(async () => dbInv.resetAllData()),
+    chatList: publicProcedure
+      .query(async () => dbInv.getAdminChatList()),
+    getChatMessages: publicProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => dbInv.getChatMessages(input.userId)),
+    sendChatMessage: publicProcedure
+      .input(z.object({ userId: z.number(), message: z.string() }))
+      .mutation(async ({ input }) => dbInv.sendChatMessage(input.userId, "admin", input.message)),
+    markChatRead: publicProcedure
+      .input(z.object({ userId: z.number() }))
+      .mutation(async ({ input }) => dbInv.markMessagesAsRead(input.userId, "admin")),
   }),
 });
 

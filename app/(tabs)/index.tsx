@@ -226,6 +226,15 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Floating Chat Button */}
+      <TouchableOpacity
+        style={s.chatFab}
+        onPress={() => router.push("/chat" as any)}
+        activeOpacity={0.8}
+      >
+        <Text style={s.chatFabIcon}>💬</Text>
+      </TouchableOpacity>
     </ScreenContainer>
   );
 }
@@ -258,6 +267,10 @@ const s = StyleSheet.create({
   actionIconBg: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center", marginBottom: 8 },
   actionIcon: { fontSize: 22 },
   actionText: { fontSize: 11, color: "#ECEDEE", fontWeight: "600" },
+
+  // Chat FAB
+  chatFab: { position: "absolute", bottom: 20, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center", shadowColor: "#DC2626", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 8 },
+  chatFabIcon: { fontSize: 26 },
 
   // Section
   section: { paddingHorizontal: 20, marginTop: 24 },

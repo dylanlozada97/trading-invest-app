@@ -84,9 +84,19 @@ export const transactions = mysqlTable("transactions", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const chatMessages = mysqlTable("chat_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  senderType: mysqlEnum("senderType", ["user", "admin"]).notNull(),
+  message: text("message").notNull(),
+  isRead: int("isRead").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export type AppUser = typeof appUsers.$inferSelect;
 export type Investment = typeof investments.$inferSelect;
 export type Recharge = typeof recharges.$inferSelect;
 export type Withdrawal = typeof withdrawals.$inferSelect;
 export type Commission = typeof commissions.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
+export type ChatMessage = typeof chatMessages.$inferSelect;

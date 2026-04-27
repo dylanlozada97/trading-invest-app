@@ -87,7 +87,7 @@
 - [x] BUG: Los retiros no se están aprobando desde el panel admin
 
 ## Bugs (Abril 24 - Retiros v2)
-- [ ] BUG: El botón de aprobar/rechazar retiro no funciona en el panel admin (el retiro se descuenta pero no se puede procesar)
+- [x] BUG: El botón de aprobar/rechazar retiro no funciona en el panel admin (el retiro se descuenta pero no se puede procesar)
 
 ## Mejoras (Abril 24 - Historial Retiros)
 - [x] Mostrar al usuario el historial de retiros con estado (pendiente, aprobado, rechazado)
@@ -110,3 +110,15 @@
 - [x] Retiro mínimo $50,000 y máximo $1,000,000 por operación
 - [x] Retiro máximo por día por usuario $1,000,000
 - [x] Mostrar mensajes claros al usuario cuando se exceda un límite
+
+## Bugs (Abril 24 - Comisiones referidos)
+- [x] BUG: No se genera comisión al referidor cuando un referido invierte (verificado: funciona, los referidos aún no habían invertido)
+
+## Mejoras (Abril 25 - Chat en vivo)
+- [x] Crear tabla de mensajes en la base de datos
+- [x] Funciones backend para enviar y recibir mensajes
+- [x] Pantalla de chat en la app para el usuario
+- [x] Sección de chat en el panel admin para responder mensajes
+- [x] Indicador de mensajes no leídos
+- [x] Botón flotante de chat en el home screen
+- [x] Auto-refresh de mensajes cada 5 segundos

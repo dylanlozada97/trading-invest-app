@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/mysql2";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 import * as schema from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -728,6 +728,8 @@ export async function resetAllData() {
     await db.delete(schema.withdrawals);
     // Delete all commissions
     await db.delete(schema.commissions);
+    // Delete all chat messages
+    await db.delete(schema.chatMessages);
     // Reset all user balances to 0
     await db.update(schema.appUsers).set({ balance: "0", totalReferrals: 0 });
 
@@ -735,4 +737,111 @@ export async function resetAllData() {
   } catch (error: any) {
     throw new Error(error.message);
   }
+}
+
+// CHAT
+export async function sendChatMessage(userId: number, senderType: "user" | "admin", message: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    await db.insert(schema.chatMessages).values({
+      userId,
+      senderType,
+      message,
+      isRead: 0,
+      createdAt: new Date(),
+    });
+    return { success: true };
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}
+
+export async function getChatMessages(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const messages = await db.select().from(schema.chatMessages)
+    .where(eq(schema.chatMessages.userId, userId))
+    .orderBy(schema.chatMessages.createdAt);
+  return messages;
+}
+
+export async function markMessagesAsRead(userId: number, senderType: "user" | "admin") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Mark messages from the other party as read
+  const otherSender = senderType === "user" ? "admin" : "user";
+  await db.update(schema.chatMessages)
+    .set({ isRead: 1 })
+    .where(and(
+      eq(schema.chatMessages.userId, userId),
+      eq(schema.chatMessages.senderType, otherSender),
+      eq(schema.chatMessages.isRead, 0)
+    ));
+  return { success: true };
+}
+
+export async function getAdminChatList() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Get all users who have chat messages
+  const allMessages = await db.select().from(schema.chatMessages)
+    .orderBy(desc(schema.chatMessages.createdAt));
+
+  // Group by userId and get last message + unread count
+  const chatMap = new Map<number, { userId: number; lastMessage: string; lastMessageAt: Date; unreadCount: number }>(); 
+  for (const msg of allMessages) {
+    if (!chatMap.has(msg.userId)) {
+      chatMap.set(msg.userId, {
+        userId: msg.userId,
+        lastMessage: msg.message,
+        lastMessageAt: msg.createdAt,
+        unreadCount: 0,
+      });
+    }
+    // Count unread messages from users (not yet read by admin)
+    if (msg.senderType === "user" && msg.isRead === 0) {
+      const entry = chatMap.get(msg.userId)!;
+      entry.unreadCount++;
+    }
+  }
+
+  // Get usernames
+  const userIds = Array.from(chatMap.keys());
+  const chatList = [];
+  for (const uid of userIds) {
+    const user = await db.select({ id: schema.appUsers.id, username: schema.appUsers.username })
+      .from(schema.appUsers).where(eq(schema.appUsers.id, uid)).limit(1);
+    const entry = chatMap.get(uid)!;
+    chatList.push({
+      ...entry,
+      username: user.length > 0 ? user[0].username : "Usuario #" + uid,
+    });
+  }
+
+  // Sort by unread first, then by last message date
+  chatList.sort((a, b) => {
+    if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
+    if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
+    return b.lastMessageAt.getTime() - a.lastMessageAt.getTime();
+  });
+
+  return chatList;
+}
+
+export async function getUnreadCountForUser(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const unread = await db.select().from(schema.chatMessages)
+    .where(and(
+      eq(schema.chatMessages.userId, userId),
+      eq(schema.chatMessages.senderType, "admin"),
+      eq(schema.chatMessages.isRead, 0)
+    ));
+  return { count: unread.length };
 }
