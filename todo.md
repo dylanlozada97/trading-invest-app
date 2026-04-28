@@ -131,3 +131,6 @@
 - [x] Endpoint para exportar retiros aprobados pendientes de pago como Excel
 - [x] Botón en admin para descargar Excel de pagos pendientes
 - [x] Botón "Marcar como pagado" para retiros ya transferidos
+
+## Cambios (Abril 28 - Límites)
+- [x] Cambiar límite mínimo de inversión de $50k a $200k
