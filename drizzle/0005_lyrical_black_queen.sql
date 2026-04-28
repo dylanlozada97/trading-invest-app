@@ -1,0 +1,1 @@
+ALTER TABLE `withdrawals` MODIFY COLUMN `status` enum('pending','approved','rejected','paid') NOT NULL DEFAULT 'pending';

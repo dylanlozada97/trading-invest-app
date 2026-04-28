@@ -61,7 +61,7 @@ export const withdrawals = mysqlTable("withdrawals", {
   amount: varchar("amount", { length: 50 }).notNull(),
   accountNumber: varchar("accountNumber", { length: 256 }).notNull(),
   bankName: varchar("bankName", { length: 256 }).notNull(),
-  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  status: mysqlEnum("status", ["pending", "approved", "rejected", "paid"]).default("pending").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

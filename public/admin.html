@@ -722,13 +722,20 @@
             <div class="table-container">
                 <div class="table-header">
                     <h2>🏦 Solicitudes de Retiro</h2>
-                    <input type="text" class="search-box" id="withdrawalSearch" placeholder="Buscar por usuario...">
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <input type="text" class="search-box" id="withdrawalSearch" placeholder="Buscar por usuario...">
+                        <button onclick="downloadWithdrawalsExcel()" style="padding:8px 16px;background:#10b981;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:bold;white-space:nowrap;">📥 Descargar Excel</button>
+                    </div>
                 </div>
-                <div class="filter-section" style="padding: 0 20px;">
-                    <button class="filter-btn active" onclick="filterWithdrawals('all')">Todas</button>
-                    <button class="filter-btn" onclick="filterWithdrawals('pending')">Pendientes</button>
-                    <button class="filter-btn" onclick="filterWithdrawals('approved')">Aprobadas</button>
-                    <button class="filter-btn" onclick="filterWithdrawals('rejected')">Rechazadas</button>
+                <div class="filter-section" style="padding: 0 20px;display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <button class="filter-btn active" onclick="filterWithdrawals('all')">Todas</button>
+                        <button class="filter-btn" onclick="filterWithdrawals('pending')">Pendientes</button>
+                        <button class="filter-btn" onclick="filterWithdrawals('approved')">Aprobadas</button>
+                        <button class="filter-btn" onclick="filterWithdrawals('rejected')">Rechazadas</button>
+                        <button class="filter-btn" onclick="filterWithdrawals('paid')">Pagadas</button>
+                    </div>
+                    <button onclick="markAllApprovedAsPaid()" style="padding:8px 16px;background:#3b82f6;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">✅ Marcar todos como pagados</button>
                 </div>
                 <table>
                     <thead>
@@ -741,6 +748,7 @@
                             <th>Fecha Solicitud</th>
                             <th>Estado</th>
                             <th>Acciones</th>
+                            <th>Pagado</th>
                         </tr>
                     </thead>
                     <tbody id="withdrawalsTable">
@@ -1357,7 +1365,7 @@
             }
 
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No hay retiros</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No hay retiros</td></tr>';
                 return;
             }
 
@@ -1375,6 +1383,7 @@
                         <td>${createdDate.toLocaleDateString('es-ES')}</td>
                         <td>${statusBadge}</td>
                         <td>${w.status === 'pending' ? `<button class="btn btn-approve" onclick="openWithdrawalModal(${w.id})">Procesar</button>` : '-'}</td>
+                        <td>${w.status === 'approved' ? `<button class="btn btn-approve" onclick="markWithdrawalAsPaid(${w.id})" style="background:#10b981;">Pagado</button>` : (w.status === 'paid' ? '<span style="color:#10b981;">✓ Pagado</span>' : '-')}</td>
                     </tr>
                 `;
             }).join('');
@@ -1859,3 +1868,62 @@
     </script>
 </body>
 </html>
+
+        // Download withdrawals as Excel/CSV
+        async function downloadWithdrawalsExcel() {
+            try {
+                const withdrawals = await trpcGet('admin.getApprovedWithdrawalsForPayment');
+                if (!withdrawals || withdrawals.length === 0) {
+                    alert('No hay retiros aprobados para descargar');
+                    return;
+                }
+
+                // Create CSV content
+                let csv = 'Usuario,Monto,Banco,Cuenta,Titular,Fecha\n';
+                let total = 0;
+                withdrawals.forEach(w => {
+                    const amount = parseFloat(w.amount);
+                    total += amount;
+                    csv += `"${w.username}","${amount.toFixed(2)}","${w.banco}","${w.cuenta}","${w.titular}","${new Date(w.fecha).toLocaleDateString('es-ES')}"\n`;
+                });
+                csv += `\nTOTAL,,"","","${total.toFixed(2)}"\n`;
+
+                // Download CSV
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `retiros-pagos-${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showAlert('Excel descargado correctamente', 'success');
+            } catch (e) {
+                console.error('Error descargando Excel:', e);
+                showAlert('Error al descargar Excel', 'error');
+            }
+        }
+
+        async function markWithdrawalAsPaid(withdrawalId) {
+            try {
+                await trpcPost('admin.markWithdrawalAsPaid', { withdrawalId });
+                showAlert('Retiro marcado como pagado', 'success');
+                await loadData();
+            } catch (e) {
+                console.error('Error marcando como pagado:', e);
+                showAlert('Error al marcar como pagado', 'error');
+            }
+        }
+
+        async function markAllApprovedAsPaid() {
+            if (!confirm('¿Marcar todos los retiros aprobados como pagados?')) return;
+            try {
+                await trpcPost('admin.markAllApprovedAsPaid', {});
+                showAlert('Todos los retiros marcados como pagados', 'success');
+                await loadData();
+            } catch (e) {
+                console.error('Error marcando como pagados:', e);
+                showAlert('Error al marcar como pagados', 'error');
+            }
+        }

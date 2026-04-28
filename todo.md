@@ -125,3 +125,9 @@
 
 ## Bugs (Abril 27 - Chat)
 - [x] BUG: Los mensajes del chat se envían desde la app pero no aparecen en el panel admin (arreglado: formato superjson)
+
+## Mejoras (Abril 27 - Excel Pagos)
+- [x] Agregar estado "paid" (pagado) a retiros aprobados
+- [x] Endpoint para exportar retiros aprobados pendientes de pago como Excel
+- [x] Botón en admin para descargar Excel de pagos pendientes
+- [x] Botón "Marcar como pagado" para retiros ya transferidos

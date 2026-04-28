@@ -141,6 +141,13 @@ export const appRouter = router({
     markChatRead: publicProcedure
       .input(z.object({ userId: z.number() }))
       .mutation(async ({ input }) => dbInv.markMessagesAsRead(input.userId, "admin")),
+    getApprovedWithdrawalsForPayment: publicProcedure
+      .query(async () => dbInv.getApprovedWithdrawalsForPayment()),
+    markWithdrawalAsPaid: publicProcedure
+      .input(z.object({ withdrawalId: z.number() }))
+      .mutation(async ({ input }) => dbInv.markWithdrawalAsPaid(input.withdrawalId)),
+    markAllApprovedAsPaid: publicProcedure
+      .mutation(async () => dbInv.markAllApprovedAsPaid()),
   }),
 });
 

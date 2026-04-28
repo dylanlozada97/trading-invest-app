@@ -36,6 +36,13 @@
       "when": 1777290221471,
       "tag": "0004_broad_zodiak",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1777294074029,
+      "tag": "0005_lyrical_black_queen",
+      "breakpoints": true
     }
   ]
 }

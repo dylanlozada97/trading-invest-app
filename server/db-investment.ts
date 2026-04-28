@@ -845,3 +845,59 @@ export async function getUnreadCountForUser(userId: number) {
     ));
   return { count: unread.length };
 }
+
+// EXCEL EXPORT - Retiros aprobados pendientes de pago
+export async function getApprovedWithdrawalsForPayment() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const withdrawals = await db.select().from(schema.withdrawals)
+    .where(eq(schema.withdrawals.status, "approved"));
+
+  // Get usernames for each withdrawal
+  const result = [];
+  for (const w of withdrawals) {
+    const user = await db.select({ username: schema.appUsers.username })
+      .from(schema.appUsers).where(eq(schema.appUsers.id, w.userId)).limit(1);
+    
+    // Parse bankName which contains "Banco - Titular"
+    const bankParts = w.bankName.split(" - ");
+    const banco = bankParts[0] || w.bankName;
+    const titular = bankParts[1] || "";
+
+    result.push({
+      id: w.id,
+      username: user.length > 0 ? user[0].username : "Usuario #" + w.userId,
+      amount: w.amount,
+      banco,
+      cuenta: w.accountNumber,
+      titular,
+      fecha: w.createdAt,
+    });
+  }
+
+  return result;
+}
+
+export async function markWithdrawalAsPaid(withdrawalId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const withdrawal = await db.select().from(schema.withdrawals).where(eq(schema.withdrawals.id, withdrawalId)).limit(1);
+  if (withdrawal.length === 0) throw new Error("Retiro no encontrado");
+  if (withdrawal[0].status !== "approved") throw new Error("Solo se pueden marcar como pagados los retiros aprobados");
+
+  await db.update(schema.withdrawals).set({ status: "paid" }).where(eq(schema.withdrawals.id, withdrawalId));
+  return { success: true };
+}
+
+export async function markAllApprovedAsPaid() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.update(schema.withdrawals)
+    .set({ status: "paid" })
+    .where(eq(schema.withdrawals.status, "approved"));
+  
+  return { success: true };
+}
